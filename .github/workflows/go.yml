@@ -26,4 +26,7 @@ jobs:
     - name: Build
       env:
         DOCKER_PWD: ${{ secrets.DOCKER_PWD }}
-      run: etc/testing/github_build.sh
+      run: |
+          whoami
+          groups
+          etc/testing/github_build.sh
