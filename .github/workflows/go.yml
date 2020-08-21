@@ -24,7 +24,8 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Build
-      run:
-       - whoami
-       - pwd
-       - git log |head -n 10
+      run: |
+
+        whoami
+        pwd
+        git log |head -n 10
