@@ -29,8 +29,6 @@ jobs:
       run: etc/testing/github_build.sh
 
     - uses: azure/setup-kubectl@v1
-      with:
-        version: '1.18.0'
       id: install
 
       # TODO: turn this into an action
