@@ -29,10 +29,7 @@ jobs:
       run: etc/testing/github_build.sh
 
     - uses: azure/setup-kubectl@v1
-      id: install
-
     - uses: azure/setup-helm@v1
-      id: install
 
       # TODO: turn this into an action
     - name: Get Testfaster CLI
