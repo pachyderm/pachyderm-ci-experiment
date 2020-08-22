@@ -37,6 +37,13 @@ jobs:
           mkdir -p bin
           curl -sSL -o bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
           chmod +x bin/testctl
+          echo "::add-path::$(pwd)/bin"
           bin/testctl login --token ${{ secrets.TESTFASTER_TOKEN }}
-          bin/testctl get
-          KUBECONFIG=kubeconfig kubectl get pods --all-namespaces
+
+    - name: Test
+      run: etc/testing/github_tests.sh
+      env:
+        PPS_BUCKETS: 6
+        AUTH_BUCKETS: 2
+        GOPROXY: https://proxy.golang.org
+        BUCKET: MISC
