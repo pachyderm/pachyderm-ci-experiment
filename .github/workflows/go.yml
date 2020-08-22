@@ -28,6 +28,11 @@ jobs:
         DOCKER_PWD: ${{ secrets.DOCKER_PWD }}
       run: etc/testing/github_build.sh
 
+    - uses: azure/setup-kubectl@v1
+      with:
+        version: '1.18.0'
+      id: install
+
       # TODO: turn this into an action
     - name: Get Testfaster CLI
       run: |
@@ -35,3 +40,5 @@ jobs:
           curl -sSL -o bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
           chmod +x bin/testctl
           bin/testctl login --token ${{ secrets.TESTFASTER_TOKEN }}
+          bin/testctl get
+          KUBECONFIG=kubeconfig kubectl get pods --all-namespaces
