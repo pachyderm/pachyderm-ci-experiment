@@ -168,6 +168,12 @@ func validateNames(names map[string]bool, input *pps.Input) error {
 				return err
 			}
 		}
+	case input.Group != nil:
+		for _, input := range input.Group {
+			if err := validateNames(names, input); err != nil {
+				return err
+			}
+		}
 	case input.Git != nil:
 		if names[input.Git.Name] {
 			return errors.Errorf(`name "%s" was used more than once`, input.Git.Name)
@@ -246,6 +252,17 @@ func (a *apiServer) validateInput(pachClient *client.APIClient, pipelineName str
 					// are not yet clear, and we see no use case for them yet, so block
 					// them until we know how they should work
 					return errors.Errorf("S3 inputs in join expressions are not supported")
+				}
+			}
+			if input.Group != nil {
+				if set {
+					return errors.Errorf("multiple input types set")
+				}
+				set = true
+				if ppsutil.ContainsS3Inputs(input) {
+					// See above for "joins"; block s3 inputs in group expressions until
+					// we know how they should work
+					return errors.Errorf("S3 inputs in group expressions are not supported")
 				}
 			}
 			if input.Union != nil {
@@ -951,7 +968,9 @@ func (a *apiServer) DeleteJob(ctx context.Context, request *pps.DeleteJobRequest
 	if err != nil {
 		return nil, err
 	}
-
+	if err := a.stopJob(ctx, pachClient, request.Job); err != nil {
+		return nil, err
+	}
 	_, err = col.NewSTM(ctx, a.env.GetEtcdClient(), func(stm col.STM) error {
 		return a.jobs.ReadWrite(stm).Delete(request.Job.ID)
 	})
@@ -970,11 +989,17 @@ func (a *apiServer) StopJob(ctx context.Context, request *pps.StopJobRequest) (r
 	if err != nil {
 		return nil, err
 	}
+	if err := a.stopJob(ctx, pachClient, request.Job); err != nil {
+		return nil, err
+	}
+	return &types.Empty{}, nil
+}
 
+func (a *apiServer) stopJob(ctx context.Context, pachClient *client.APIClient, job *pps.Job) error {
 	// Lookup jobInfo
 	jobPtr := &pps.EtcdJobInfo{}
-	if err := a.jobs.ReadOnly(ctx).Get(request.Job.ID, jobPtr); err != nil {
-		return nil, err
+	if err := a.jobs.ReadOnly(ctx).Get(job.ID, jobPtr); err != nil {
+		return err
 	}
 	// Finish the job's output commit without a tree -- worker/master will mark
 	// the job 'killed'
@@ -983,9 +1008,11 @@ func (a *apiServer) StopJob(ctx context.Context, request *pps.StopJobRequest) (r
 			Commit: jobPtr.OutputCommit,
 			Empty:  true,
 		}); err != nil {
-		return nil, err
+		if !(pfsServer.IsCommitFinishedErr(err) || pfsServer.IsCommitNotFoundErr(err) || pfsServer.IsCommitDeletedErr(err)) {
+			return err
+		}
 	}
-	return &types.Empty{}, nil
+	return nil
 }
 
 // RestartDatum implements the protobuf pps.RestartDatum RPC
@@ -1833,6 +1860,16 @@ func (a *apiServer) hardStopPipeline(pachClient *client.APIClient, pipelineInfo 
 	); err != nil && !isNotFoundErr(err) {
 		return errors.Wrapf(err, "could not recreate original output branch")
 	}
+	if pipelineInfo.EnableStats {
+		if err := pachClient.CreateBranch(
+			pipelineInfo.Pipeline.Name,
+			"stats",
+			"stats",
+			nil,
+		); err != nil && !isNotFoundErr(err) {
+			return errors.Wrapf(err, "could not recreate original stats branch")
+		}
+	}
 
 	// Now that new commits won't be created on the master branch, enumerate
 	// existing commits and close any open ones.
@@ -2252,6 +2289,11 @@ func (a *apiServer) CreatePipeline(ctx context.Context, request *pps.CreatePipel
 			// Read existing PipelineInfo from PFS output repo
 			return a.pipelines.ReadWrite(stm).Update(pipelineName, &pipelinePtr, func() error {
 				var err error
+
+				// We can't recover from an incomplete pipeline info here because
+				// modifying the spec repo depends on being able to access the previous
+				// commit. We therefore use `GetPipelineInfo` which will error if the
+				// spec commit isn't working.
 				oldPipelineInfo, err = ppsutil.GetPipelineInfo(pachClient, pipelineName, &pipelinePtr)
 				if err != nil {
 					return err
@@ -2614,6 +2656,13 @@ func (a *apiServer) ListPipeline(ctx context.Context, request *pps.ListPipelineR
 func (a *apiServer) listPipeline(pachClient *client.APIClient, request *pps.ListPipelineRequest, f func(*pps.PipelineInfo) error) error {
 	return a.listPipelinePtr(pachClient, request.Pipeline, request.History,
 		func(name string, ptr *pps.EtcdPipelineInfo) error {
+			if request.AllowIncomplete {
+				pipelineInfo, err := ppsutil.GetPipelineInfoAllowIncomplete(pachClient, name, ptr)
+				if err != nil {
+					return err
+				}
+				return f(pipelineInfo)
+			}
 			pipelineInfo, err := ppsutil.GetPipelineInfo(pachClient, name, ptr)
 			if err != nil {
 				return err
@@ -3003,7 +3052,7 @@ func (a *apiServer) RunPipeline(ctx context.Context, request *pps.RunPipelineReq
 			return nil, errors.Errorf("request should not contain nil provenance")
 		}
 		branch := prov.Branch
-		if branch == nil {
+		if branch == nil || branch.Name == "" {
 			if prov.Commit == nil {
 				return nil, errors.Errorf("request provenance cannot have both a nil commit and nil branch")
 			}
@@ -3033,6 +3082,7 @@ func (a *apiServer) RunPipeline(ctx context.Context, request *pps.RunPipelineReq
 		provenanceMap[key(branch.Repo.Name, branch.Name)] = prov
 	}
 
+	// fill in the provenance from branches in the provenance that weren't explicitly set in the request
 	for _, branchProv := range append(branch.Provenance, branch.Branch) {
 		if _, ok := provenanceMap[key(branchProv.Repo.Name, branchProv.Name)]; !ok {
 			branchInfo, err := pfsClient.InspectBranch(ctx, &pfs.InspectBranchRequest{
@@ -3059,8 +3109,9 @@ func (a *apiServer) RunPipeline(ctx context.Context, request *pps.RunPipelineReq
 	}
 	// we need to include the spec commit in the provenance, so that the new job is represented by the correct spec commit
 	specProvenance := client.NewCommitProvenance(ppsconsts.SpecRepo, request.Pipeline.Name, specCommit.Commit.ID)
-	provenance = append(provenance, specProvenance)
-
+	if _, ok := provenanceMap[key(specProvenance.Branch.Repo.Name, specProvenance.Branch.Name)]; !ok {
+		provenance = append(provenance, specProvenance)
+	}
 	if _, err := pachClient.ExecuteInTransaction(func(txnClient *client.APIClient) error {
 		newCommit, err := txnClient.PfsAPIClient.StartCommit(txnClient.Ctx(), &pfs.StartCommitRequest{
 			Parent: &pfs.Commit{
@@ -3113,36 +3164,58 @@ func (a *apiServer) RunCron(ctx context.Context, request *pps.RunCronRequest) (r
 	if pipelineInfo.Input == nil {
 		return nil, errors.Errorf("pipeline must have a cron input")
 	}
-	if pipelineInfo.Input.Cron == nil {
+
+	// find any cron inputs
+	var crons []*pps.CronInput
+	pps.VisitInput(pipelineInfo.Input, func(in *pps.Input) {
+		if in.Cron != nil {
+			crons = append(crons, in.Cron)
+		}
+	})
+
+	if len(crons) < 1 {
 		return nil, errors.Errorf("pipeline must have a cron input")
 	}
 
-	cron := pipelineInfo.Input.Cron
-
-	// We need the DeleteFile and the PutFile to happen in the same commit
-	_, err = pachClient.StartCommit(cron.Repo, "master")
+	txn, err := pachClient.StartTransaction()
 	if err != nil {
 		return nil, err
 	}
-	if cron.Overwrite {
-		// get rid of any files, so the new file "overwrites" previous runs
-		err = pachClient.DeleteFile(cron.Repo, "master", "")
-		if err != nil && !isNotFoundErr(err) && !pfsServer.IsNoHeadErr(err) {
-			return nil, errors.Wrapf(err, "delete error")
+
+	// We need all the DeleteFile and the PutFile requests to happen atomicly
+	txnClient := pachClient.WithTransaction(txn)
+
+	// make a tick on each cron input
+	for _, cron := range crons {
+		// Use a PutFileClient
+		pfc, err := txnClient.NewPutFileClient()
+		if err != nil {
+			return nil, err
+		}
+		if cron.Overwrite {
+			// get rid of any files, so the new file "overwrites" previous runs
+			err = pfc.DeleteFile(cron.Repo, "master", "")
+			if err != nil && !isNotFoundErr(err) && !pfsServer.IsNoHeadErr(err) {
+				return nil, errors.Wrapf(err, "delete error")
+			}
+		}
+
+		// Put in an empty file named by the timestamp
+		_, err = pfc.PutFile(cron.Repo, "master", time.Now().Format(time.RFC3339), strings.NewReader(""))
+		if err != nil {
+			return nil, errors.Wrapf(err, "put error")
+		}
+
+		err = pfc.Close()
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	// Put in an empty file named by the timestamp
-	_, err = pachClient.PutFile(cron.Repo, "master", time.Now().Format(time.RFC3339), strings.NewReader(""))
-	if err != nil {
-		return nil, errors.Wrapf(err, "put error")
-	}
-
-	err = pachClient.FinishCommit(cron.Repo, "master")
+	_, err = txnClient.FinishTransaction(txn)
 	if err != nil {
 		return nil, err
 	}
-
 	return &types.Empty{}, nil
 }
 
