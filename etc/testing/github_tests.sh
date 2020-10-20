@@ -13,6 +13,7 @@ cat .testfaster.yml
 echo ===
 
 ls -alh `which testctl`
+md5sum `which testctl`
 testctl get --config .testfaster.yml
 export KUBECONFIG=$(pwd)/kubeconfig
 
