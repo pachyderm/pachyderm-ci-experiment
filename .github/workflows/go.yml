@@ -37,7 +37,7 @@ jobs:
           mkdir -p bin
           curl -sSL -o bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
           chmod +x bin/testctl
-          echo "::add-path::$(pwd)/bin"
+          echo "$(pwd)/bin" >> $GITHUB_PATH
           bin/testctl login --token ${{ secrets.TESTFASTER_TOKEN }}
 
     - name: Test
