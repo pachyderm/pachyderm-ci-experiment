@@ -10,14 +10,16 @@ base:
 
   # TODO: make this optional
   kernel_image: "quay.io/testfaster/ignite-kernel"
-  
+
   os_dockerfile: |-
     FROM quay.io/testfaster/kube-ubuntu
-  
+
   prewarm_script: |-
     #!/bin/bash
     set -euo pipefail
     # do stuff
+
+  kubernetes_version: "v1.18.3"
 
 runtime:
   cpus: 2
