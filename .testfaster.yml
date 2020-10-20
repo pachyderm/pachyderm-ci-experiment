@@ -27,7 +27,8 @@ base:
     # we'll want to bump this hash.
     git checkout 484178af785f8f6b5c4a6c4d263bbe5f57717333
 
-    make launch-loki
+    helm --version
+    #make launch-loki
 
   kubernetes_version: 'v1.17.11'
 
