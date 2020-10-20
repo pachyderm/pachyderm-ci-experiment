@@ -12,6 +12,7 @@ echo ===
 cat .testfaster.yml
 echo ===
 
+ls -alh `which testctl`
 testctl get --config .testfaster.yml
 export KUBECONFIG=$(pwd)/kubeconfig
 
