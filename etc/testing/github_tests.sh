@@ -44,12 +44,12 @@ docker tag "pachyderm/worker:${version}" "pachyderm/worker:local"
 
 make launch-loki
 
-for i in $(seq 3); do
-    make clean-launch-dev || true # may be nothing to delete
-    make launch-dev && break
-    (( i < 3 )) # false if this is the last loop (causes exit)
-    sleep 10
+make docker-build
+for X in worker pachd; do
+    echo "Copying pachyderm/$X:local to kube"
+    docker save pachyderm/$X:local |gzip | pv | testctl ssh --tty=false -- sh -c 'gzip -d | docker load'
 done
+make launch-dev
 
 #pachctl config update context "$(pachctl config get active-context)" --pachd-address="$VM_IP:30650"
 
