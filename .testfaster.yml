@@ -13,6 +13,7 @@ base:
 
   os_dockerfile: |-
     FROM quay.io/testfaster/kube-ubuntu
+    RUN apt-get update && apt-get install -y build-essential
 
   prewarm_script: |-
     #!/bin/bash
@@ -37,4 +38,6 @@ runtime:
 
 prewarm_pool_size: 5
 max_pool_size: 15
-default_lease_timeout: "" # Never timeout leases, as we use this for dev
+# timeout vms after 1hr. hopefully tests will clean them up sooner, but if the
+# tests themselves timeout and cleanup doesn't get run...
+default_lease_timeout: 1h
