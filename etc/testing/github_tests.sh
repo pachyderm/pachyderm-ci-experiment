@@ -18,7 +18,8 @@ echo "Running test suite based on BUCKET=$BUCKET"
 
 # TODO: Like github_build.sh, need to handle the external PR case as well.
 # Previous code for this was as follows, which suggests we might need a way to
-# push docker images to the testfaster VM.
+# push docker images to the testfaster VM. Which we can do now via `testctl
+# ssh`!
 #
 #    make docker-build
 #    # push pipeline build images
