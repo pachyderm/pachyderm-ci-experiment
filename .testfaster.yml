@@ -1,0 +1,29 @@
+name: pachyderm
+
+base:
+  # NB: use:
+  #     testctl ssh --tty=false -- docker images --format "{{.Repository}}:{{.Tag}}" |sort |sed 's/^/   - /g'
+  # to refresh this list
+  # (to get extra fancy, highlight the following lines in vim and type :! and then
+  # the above command to replace it inline)
+  preload_docker_images: []
+
+  # TODO: make this optional
+  kernel_image: "quay.io/testfaster/ignite-kernel"
+  
+  os_dockerfile: |-
+    FROM quay.io/testfaster/kube-ubuntu
+  
+  prewarm_script: |-
+    #!/bin/bash
+    set -euo pipefail
+    # do stuff
+
+runtime:
+  cpus: 2
+  memory: 4GB
+  disk: 20GB
+
+prewarm_pool_size: 5
+max_pool_size: 15
+default_lease_timeout: "" # Never timeout leases, as we use this for dev

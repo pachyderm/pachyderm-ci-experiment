@@ -43,7 +43,7 @@ for i in $(seq 3); do
     sleep 10
 done
 
-pachctl config update context "$(pachctl config get active-context)" --pachd-address="$VM_IP:30650"
+#pachctl config update context "$(pachctl config get active-context)" --pachd-address="$VM_IP:30650"
 
 function test_bucket {
     set +x
