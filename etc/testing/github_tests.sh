@@ -6,6 +6,9 @@ set -ex
 rm -f "${HOME}"/.pachyderm/config.json
 
 # Get a kubernetes cluster
+echo "pwd=$(pwd)"
+ls -alh
+
 testctl get
 export KUBECONFIG=$(pwd)/kubeconfig
 
