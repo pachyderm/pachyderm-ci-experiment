@@ -19,7 +19,7 @@ base:
     set -euo pipefail
     # do stuff
 
-  kubernetes_version: "v1.18.3"
+  kubernetes_version: 'v1.17.11'
 
 runtime:
   cpus: 2
