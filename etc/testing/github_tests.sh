@@ -12,7 +12,7 @@ echo ===
 cat .testfaster.yml
 echo ===
 
-testctl get
+testctl get --config .testfaster.yml
 export KUBECONFIG=$(pwd)/kubeconfig
 
 # TODO: replace this with `testctl ip`
