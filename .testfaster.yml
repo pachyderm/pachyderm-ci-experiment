@@ -17,7 +17,16 @@ base:
   prewarm_script: |-
     #!/bin/bash
     set -euo pipefail
-    # do stuff
+
+    git clone https://github.com/pachyderm/pachyderm
+    cd pachyderm
+
+    # pin the version of pachyderm we use for prewarm script, so at least it's
+    # reproducible. if pachyderm changes the things being updated in here,
+    # we'll want to bump this hash.
+    git checkout 484178af785f8f6b5c4a6c4d263bbe5f57717333
+
+    make launch-loki
 
   kubernetes_version: 'v1.17.11'
 

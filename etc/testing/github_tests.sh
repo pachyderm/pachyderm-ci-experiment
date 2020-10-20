@@ -42,8 +42,6 @@ docker tag "pachyderm/pachd:${version}" "pachyderm/pachd:local"
 docker pull "pachyderm/worker:${version}"
 docker tag "pachyderm/worker:${version}" "pachyderm/worker:local"
 
-make launch-loki
-
 make docker-build
 for X in worker pachd; do
     echo "Copying pachyderm/$X:local to kube"
