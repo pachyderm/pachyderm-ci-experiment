@@ -19,13 +19,15 @@ base:
     #!/bin/bash
     set -euo pipefail
 
+    # TODO: switch this back to pachyderm/pachyderm once we land this
+    # experiment
     git clone https://github.com/pachyderm/pachyderm-ci-experiment
     cd pachyderm
 
     # pin the version of pachyderm we use for prewarm script, so at least it's
     # reproducible. if pachyderm changes the things being brought up in here,
     # we'll want to bump this hash.
-    git checkout 484178af785f8f6b5c4a6c4d263bbe5f57717333
+    git checkout 4ad21486691182526c3d03cffb296657b722be4e
 
     helm version
     make launch-loki
