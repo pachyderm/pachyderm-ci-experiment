@@ -7,10 +7,12 @@ rm -f "${HOME}"/.pachyderm/config.json
 
 # Get a kubernetes cluster
 testctl get --config .testfaster.yml
-export KUBECONFIG=$(pwd)/kubeconfig
+KUBECONFIG="$(pwd)/kubeconfig"
+export KUBECONFIG
 
 # TODO: replace this with `testctl ip`
-export VM_IP=$(grep server kubeconfig |cut -d ':' -f 3 |sed 's/\/\///')
+VM_IP=$(grep server kubeconfig |cut -d ':' -f 3 |sed 's/\/\///')
+export VM_IP
 
 kubectl version
 
