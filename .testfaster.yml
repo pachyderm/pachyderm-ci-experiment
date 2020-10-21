@@ -19,7 +19,7 @@ base:
     #!/bin/bash
     set -euo pipefail
 
-    git clone https://github.com/pachyderm/pachyderm
+    git clone https://github.com/pachyderm/pachyderm-ci-experiment
     cd pachyderm
 
     # pin the version of pachyderm we use for prewarm script, so at least it's
@@ -27,10 +27,10 @@ base:
     # we'll want to bump this hash.
     git checkout 484178af785f8f6b5c4a6c4d263bbe5f57717333
 
-    helm --version
-    #make launch-loki
+    helm version
+    make launch-loki
 
-  kubernetes_version: 'v1.17.11'
+  kubernetes_version: 'v1.18.3'
 
 runtime:
   cpus: 2
