@@ -23,10 +23,10 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-    - name: Build
-      env:
-        DOCKER_PWD: ${{ secrets.DOCKER_PWD }}
-      run: etc/testing/github_build.sh
+    #- name: Build
+    #  env:
+    #    DOCKER_PWD: ${{ secrets.DOCKER_PWD }}
+    #  run: etc/testing/github_build.sh
 
     - uses: azure/setup-kubectl@v1
     - uses: azure/setup-helm@v1

@@ -27,12 +27,15 @@ echo "Running test suite based on BUCKET=$BUCKET"
 #        make push-to-minikube
 #    popd
 
-make install
-version=$(pachctl version --client-only)
-docker pull "pachyderm/pachd:${version}"
-docker tag "pachyderm/pachd:${version}" "pachyderm/pachd:local"
-docker pull "pachyderm/worker:${version}"
-docker tag "pachyderm/worker:${version}" "pachyderm/worker:local"
+# XXX :local tag will collide with other concurrent tests running on the same
+# github actions runner
+
+#make install
+#version=$(pachctl version --client-only)
+#docker pull "pachyderm/pachd:${version}"
+#docker tag "pachyderm/pachd:${version}" "pachyderm/pachd:local"
+#docker pull "pachyderm/worker:${version}"
+#docker tag "pachyderm/worker:${version}" "pachyderm/worker:local"
 
 make docker-build
 for X in worker pachd; do
