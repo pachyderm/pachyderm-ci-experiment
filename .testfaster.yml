@@ -21,7 +21,7 @@ base:
 
     # TODO: switch this back to pachyderm/pachyderm once we land this
     # experiment
-    git clone https://github.com/pachyderm/pachyderm-ci-experiment
+    git clone https://github.com/pachyderm/pachyderm-ci-experiment pachyderm
     cd pachyderm
 
     # pin the version of pachyderm we use for prewarm script, so at least it's
