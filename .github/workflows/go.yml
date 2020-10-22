@@ -38,7 +38,9 @@ jobs:
           bin/testctl login --token ${{ secrets.TESTFASTER_TOKEN }}
 
     - name: Test
-      run: etc/testing/github_tests.sh
+      # Send stderr to stdout to try and avoid interleaving stdout and stderr
+      # bug in github actions. They're indistinguishable anyway.
+      run: etc/testing/github_tests.sh 2>&1
       env:
         PPS_BUCKETS: 6
         AUTH_BUCKETS: 2
