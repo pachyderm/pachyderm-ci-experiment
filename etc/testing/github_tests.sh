@@ -6,7 +6,14 @@ set -ex
 rm -f "${HOME}"/.pachyderm/config.json
 
 # Get a kubernetes cluster
+echo before
+ls -alh
+
 testctl get --config .testfaster.yml
+
+echo after
+ls -alh
+
 KUBECONFIG="$(pwd)/kubeconfig"
 export KUBECONFIG
 
