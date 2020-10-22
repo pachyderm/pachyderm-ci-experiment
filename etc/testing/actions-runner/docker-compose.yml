@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+
+  runner:
+    image: samber/github-actions-runner:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp:/tmp
+    environment:
+      - GH_REPOSITORY=${GH_REPOSITORY}
+      - GH_RUNNER_TOKEN=${GH_RUNNER_TOKEN}
+    restart: unless-stopped
