@@ -8,12 +8,9 @@ on:
 
 jobs:
 
-  build:
-    name: Build
+  test:
     runs-on: self-hosted
-
     steps:
-
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
@@ -31,7 +28,7 @@ jobs:
     - uses: azure/setup-kubectl@v1
     - uses: azure/setup-helm@v1
 
-      # TODO: turn this into an action
+    # TODO: turn this into an action
     - name: Get Testfaster CLI
       run: |
           mkdir -p bin
@@ -39,11 +36,28 @@ jobs:
           chmod +x bin/testctl
           echo "$(pwd)/bin" >> $GITHUB_PATH
           bin/testctl login --token ${{ secrets.TESTFASTER_TOKEN }}
-
     - name: Test
       run: etc/testing/github_tests.sh
       env:
         PPS_BUCKETS: 6
         AUTH_BUCKETS: 2
         GOPROXY: https://proxy.golang.org
-        BUCKET: MISC
+        BUCKET: ${{ matrix.bucket }}
+
+    strategy:
+      matrix:
+        bucket:
+        - MISC
+        # If you want to update the number of PPS or auth buckets, you'll neet to
+        # update the value of PPS_BUCKETS or AUTH_BUCKETS above
+        - ADMIN
+        - AUTH1
+        - AUTH2
+        - PFS
+        - PPS1
+        - PPS2
+        - PPS3
+        - PPS4
+        - PPS5
+        - PPS6
+        - EXAMPLES
