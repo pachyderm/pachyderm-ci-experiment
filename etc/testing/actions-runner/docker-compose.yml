@@ -3,7 +3,7 @@ version: '3'
 services:
 
   runner:
-    image: samber/github-actions-runner:latest
+    build: .
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp:/tmp
