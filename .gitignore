@@ -61,3 +61,10 @@ src/cmd/ppsd/ppsd
 *.pyc
 __pycache__
 
+# vim
+*.swp
+*.swa
+*.swo
+*.swn
+
+kubeconfig
