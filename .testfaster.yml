@@ -36,11 +36,11 @@ base:
 
 runtime:
   cpus: 4
-  memory: 6GB
+  memory: 2GB
   disk: 20GB
 
-prewarm_pool_size: 5
-max_pool_size: 15
+prewarm_pool_size: 12
+max_pool_size: 24
 # timeout vms after 1hr. hopefully tests will clean them up sooner, but if the
 # tests themselves timeout and cleanup doesn't get run...
 default_lease_timeout: 1h

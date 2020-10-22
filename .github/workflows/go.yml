@@ -36,6 +36,7 @@ jobs:
           chmod +x bin/testctl
           echo "$(pwd)/bin" >> $GITHUB_PATH
           bin/testctl login --token ${{ secrets.TESTFASTER_TOKEN }}
+
     - name: Test
       run: etc/testing/github_tests.sh
       env:

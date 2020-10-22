@@ -11,8 +11,8 @@ KUBECONFIG="$(pwd)/kubeconfig"
 export KUBECONFIG
 
 # TODO: replace this with `testctl ip`
-VM_IP=$(grep server kubeconfig |cut -d ':' -f 3 |sed 's/\/\///')
-export VM_IP
+#VM_IP=$(grep server kubeconfig |cut -d ':' -f 3 |sed 's/\/\///')
+#export VM_IP
 
 kubectl version
 
