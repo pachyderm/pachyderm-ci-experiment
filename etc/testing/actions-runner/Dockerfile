@@ -43,3 +43,4 @@ RUN curl -o actions-runner-linux-x64.tar.gz -L https://github.com/actions/runner
     && rm -f actions-runner-linux-x64.tar.gz
 
 COPY start.sh /
+CMD /start.sh
