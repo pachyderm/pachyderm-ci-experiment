@@ -35,8 +35,8 @@ jobs:
       - run: |
           set -x
           mkdir -p bin
-          curl -sSL -o /usr/local/bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
-          chmod +x /usr/local/bin/testctl
+          sudo curl -sSL -o /usr/local/bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
+          sudo chmod +x /usr/local/bin/testctl
           testctl login --token "$TESTFASTER_TOKEN"
 
       - run: etc/testing/github_tests.sh
