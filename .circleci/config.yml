@@ -33,6 +33,7 @@ jobs:
       - checkout
 
       - run: |
+          set -x
           mkdir -p bin
           curl -sSL -o /usr/local/bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
           chmod +x /usr/local/bin/testctl
