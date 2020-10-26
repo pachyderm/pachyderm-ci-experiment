@@ -3,10 +3,10 @@
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
-  build:
+  test:
     docker:
       # specify the version
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.13
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -22,6 +22,41 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: go get -v -t -d ./...
-      - run: go test -v ./...
+      - run: |
+          mkdir -p bin
+          curl -sSL -o /usr/local/bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
+          chmod +x /usr/local/bin/testctl
+          testctl login --token "$TESTFASTER_TOKEN"
 
+      - name: Test
+        # Send stderr to stdout to try and avoid interleaving stdout and stderr
+        # bug in github actions. They're indistinguishable anyway.
+        run:
+          command: etc/testing/github_tests.sh 2>&1
+          environment:
+            PPS_BUCKETS: 6
+            AUTH_BUCKETS: 2
+            GOPROXY: https://proxy.golang.org
+            BUCKET: << parameters.bucket >>
+
+workflows:
+  all-tests:
+    jobs:
+      - test:
+          matrix:
+            parameters:
+              bucket:
+              - MISC
+              # If you want to update the number of PPS or auth buckets, you'll neet to
+              # update the value of PPS_BUCKETS or AUTH_BUCKETS above
+              - ADMIN
+              - AUTH1
+              - AUTH2
+              - PFS
+              - PPS1
+              - PPS2
+              - PPS3
+              - PPS4
+              - PPS5
+              - PPS6
+              - EXAMPLES
