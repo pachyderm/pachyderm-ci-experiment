@@ -18,26 +18,23 @@ jobs:
     ####   /go/src/github.com/circleci/go-tool
     ####   /go/src/bitbucket.org/circleci/go-tool
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+
+    environment:
+      PPS_BUCKETS: 6
+      AUTH_BUCKETS: 2
+      GOPROXY: https://proxy.golang.org
+      BUCKET: << parameters.bucket >>
+
     steps:
       - checkout
 
-      # specify any bash command here prefixed with `run: `
       - run: |
           mkdir -p bin
           curl -sSL -o /usr/local/bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
           chmod +x /usr/local/bin/testctl
           testctl login --token "$TESTFASTER_TOKEN"
 
-      - name: Test
-        # Send stderr to stdout to try and avoid interleaving stdout and stderr
-        # bug in github actions. They're indistinguishable anyway.
-        run:
-          command: etc/testing/github_tests.sh 2>&1
-          environment:
-            PPS_BUCKETS: 6
-            AUTH_BUCKETS: 2
-            GOPROXY: https://proxy.golang.org
-            BUCKET: << parameters.bucket >>
+      - run: etc/testing/github_tests.sh
 
 workflows:
   all-tests:
