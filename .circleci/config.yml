@@ -20,8 +20,8 @@ jobs:
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
 
     environment:
-      PPS_BUCKETS: 6
-      AUTH_BUCKETS: 2
+      PPS_BUCKETS: "6"
+      AUTH_BUCKETS: "2"
       GOPROXY: https://proxy.golang.org
       BUCKET: << parameters.bucket >>
 
