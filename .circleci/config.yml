@@ -4,6 +4,7 @@ version: 2.1
 jobs:
   test:
     docker:
+      # TODO build setup steps below into this
       - image: circleci/golang:1.13
 
     working_directory: /go/src/github.com/pachyderm/pachyderm
@@ -21,7 +22,7 @@ jobs:
       - checkout
 
       - run: |
-          sudo apt install -y pv
+          sudo apt install -y pv shellcheck
 
       - run: |
           curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
