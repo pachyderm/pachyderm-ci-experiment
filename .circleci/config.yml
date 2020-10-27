@@ -48,12 +48,16 @@ jobs:
       - run: etc/testing/github_tests.sh
 
       # retry on failure
-      - run: etc/testing/github_tests.sh
-        when: on_fail
+      - run:
+          name: Test (retry 2)
+          command: etc/testing/github_tests.sh
+          when: on_fail
 
       # retry on failure again...
-      - run: etc/testing/github_tests.sh
-        when: on_fail
+      - run:
+          name: Test (retry 3)
+          command: etc/testing/github_tests.sh
+          when: on_fail
 
 
 workflows:
