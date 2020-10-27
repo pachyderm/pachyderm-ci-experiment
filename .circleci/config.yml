@@ -28,6 +28,7 @@ jobs:
           curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
           chmod +x get_helm.sh
           sudo ./get_helm.sh
+          rm ./get_helm.sh # stop shellcheck complaining!
 
       - run: |
           set -x
