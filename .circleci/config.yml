@@ -36,6 +36,9 @@ jobs:
           sudo chmod +x /usr/local/bin/testctl
           testctl login --token "$TESTFASTER_TOKEN"
 
+      - setup_remote_docker:
+        version: 19.03.13
+
       - run: etc/testing/github_tests.sh
 
 workflows:
