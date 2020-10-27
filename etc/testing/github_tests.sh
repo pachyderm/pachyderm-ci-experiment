@@ -9,7 +9,9 @@ rm -f "${HOME}"/.pachyderm/config.json
 echo before
 ls -alh
 
-testctl get --config .testfaster.yml
+# Specify the slot so that future builds on this branch+suite id automatically
+# clean up previous VMs
+testctl get --config .testfaster.yml --slot "${CIRCLE_BRANCH},${BUCKET}"
 
 echo after
 ls -alh
