@@ -37,7 +37,7 @@ jobs:
           testctl login --token "$TESTFASTER_TOKEN"
 
       - setup_remote_docker:
-        version: 19.03.13
+          version: 19.03.13
 
       - run: etc/testing/github_tests.sh
 
