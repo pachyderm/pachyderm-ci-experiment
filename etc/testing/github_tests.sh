@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -xeuo pipefail
 
 # In case we're retrying on a new cluster
 rm -f "${HOME}"/.pachyderm/config.json
@@ -54,6 +54,9 @@ for X in worker pachd; do
     docker save pachyderm/$X:local |gzip | pv | testctl ssh --tty=false -- sh -c 'gzip -d | docker load'
 done
 make launch-dev
+
+# should be able to connect to pachyderm via KUBECONFIG
+pachctl version
 
 #pachctl config update context "$(pachctl config get active-context)" --pachd-address="$VM_IP:30650"
 
