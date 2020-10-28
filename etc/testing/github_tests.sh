@@ -11,7 +11,7 @@ ls -alh
 
 # Specify the slot so that future builds on this branch+suite id automatically
 # clean up previous VMs
-testctl get --config .testfaster.yml --slot "${CIRCLE_BRANCH},${BUCKET}"
+DEBUG_WEBSOCKETS=1 testctl get --config .testfaster.yml --slot "${CIRCLE_BRANCH},${BUCKET}"
 
 echo after
 ls -alh
