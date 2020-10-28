@@ -348,7 +348,8 @@ metadata:
   namespace: monitoring
 spec:
   selector:
-    app: alertmanager
+    matchLabels:
+      app: alertmanager
   type: NodePort
   ports:
   - name: alertmanager
@@ -2349,8 +2350,9 @@ spec:
   ports:
     - port: 3000
   selector:
-    app: grafana
-    component: core
+    matchLabels:
+      app: grafana
+      component: core
 ---
 apiVersion: v1
 data:
@@ -2594,7 +2596,8 @@ spec:
     port: 8080
     protocol: TCP
   selector:
-    app: kube-state-metrics
+    matchLabels:
+      app: kube-state-metrics
     
 ---
 apiVersion: apps/v1
@@ -2611,7 +2614,8 @@ metadata:
       To choose directories from the node to check, just mount them on the `read-du` container below `/mnt`.
 spec:
   selector:
-    app: node-directory-size-metrics
+    matchLabels:
+      app: node-directory-size-metrics
   template:
     metadata:
       labels:
@@ -2681,8 +2685,9 @@ metadata:
     component: node-exporter
 spec:
   selector:
-    app: prometheus
-    component: node-exporter
+    matchLabels:
+      app: prometheus
+      component: node-exporter
   template:
     metadata:
       name: prometheus-node-exporter
@@ -2718,8 +2723,9 @@ spec:
       port: 9100
       protocol: TCP
   selector:
-    app: prometheus
-    component: node-exporter
+    matchLabels:
+      app: prometheus
+      component: node-exporter
   type: ClusterIP
 ---
 apiVersion: v1
@@ -2850,5 +2856,6 @@ spec:
       protocol: TCP
       name: webui
   selector:
-    app: prometheus
-    component: core
+    matchLabels:
+      app: prometheus
+      component: core
