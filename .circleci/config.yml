@@ -3,9 +3,9 @@ version: 2.1
 
 jobs:
   test:
-    docker:
-      # TODO build setup steps below into this
-      - image: circleci/golang:1.13
+    machine:
+      docker_layer_caching: true
+      image: ubuntu-2004:202010-01
 
     working_directory: /go/src/github.com/pachyderm/pachyderm
     parameters:
@@ -40,10 +40,6 @@ jobs:
           sudo curl -sSL -o /usr/local/bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
           sudo chmod +x /usr/local/bin/testctl
           testctl login --token "$TESTFASTER_TOKEN"
-
-      - setup_remote_docker:
-          version: 19.03.13
-          docker_layer_caching: true
 
       - run: etc/testing/github_tests.sh
 
