@@ -59,6 +59,9 @@ make launch-dev
 # should be able to connect to pachyderm via KUBECONFIG
 pachctl version
 
+pachctl port-forward &
+sleep 5
+
 #pachctl config update context "$(pachctl config get active-context)" --pachd-address="$VM_IP:30650"
 
 function test_bucket {
