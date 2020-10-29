@@ -23,7 +23,7 @@ jobs:
       - run: make docker-build
 
       - run: |
-          sudo apt install -y pv shellcheck
+          sudo apt update && sudo apt install -y pv shellcheck
 
       - run: |
           curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
