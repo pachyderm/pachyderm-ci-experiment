@@ -60,6 +60,7 @@ make launch-dev
 pachctl version
 
 pachctl port-forward &
+PORTFORWARD_PID=$!
 sleep 5
 
 #pachctl config update context "$(pachctl config get active-context)" --pachd-address="$VM_IP:30650"
@@ -146,3 +147,5 @@ case "${BUCKET}" in
     exit 1
     ;;
 esac
+
+kill $PORTFORWARD_PID
