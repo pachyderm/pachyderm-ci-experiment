@@ -48,7 +48,8 @@ echo "Running test suite based on BUCKET=$BUCKET"
 #docker pull "pachyderm/worker:${version}"
 #docker tag "pachyderm/worker:${version}" "pachyderm/worker:local"
 
-make docker-build
+# we assume 'make docker-build' has been done by a previous build step. see .circleci/config.yml
+#make docker-build
 for X in worker pachd; do
     echo "Copying pachyderm/$X:local to kube"
     docker save pachyderm/$X:local |gzip | pv | testctl ssh --tty=false -- sh -c 'gzip -d | docker load'

@@ -21,6 +21,8 @@ jobs:
     steps:
       - checkout
 
+      - run: make docker-build
+
       - run: |
           sudo apt install -y pv shellcheck
 
