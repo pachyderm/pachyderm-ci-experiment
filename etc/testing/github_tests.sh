@@ -66,7 +66,6 @@ sleep 5
 #pachctl config update context "$(pachctl config get active-context)" --pachd-address="$VM_IP:30650"
 
 function test_bucket {
-    set +x
     package="${1}"
     target="${2}"
     bucket_num="${3}"
@@ -89,7 +88,6 @@ function test_bucket {
     test_regex="$(IFS=\|; echo "${tests[*]:start:bucket_size}")"
     echo "Running ${bucket_size} tests of ${total_tests} total tests"
     make RUN="-run=\"${test_regex}\"" "${target}"
-    set -x
 }
 
 # Clean cached test results
@@ -140,7 +138,6 @@ case "${BUCKET}" in
  AUTH?)
     bucket_num="${BUCKET#AUTH}"
     test_bucket "./src/server/auth/server/testing" test-auth "${bucket_num}" "${AUTH_BUCKETS}"
-    set +x
     ;;
  *)
     echo "Unknown bucket"
