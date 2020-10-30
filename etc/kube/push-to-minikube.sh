@@ -8,6 +8,7 @@ fi
 
 command -v pv >/dev/null 2>&1 || { echo >&2 "Required command 'pv' not found. Run 'sudo apt-get install pv'."; exit 1; }
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 if which testctl 2>/dev/null; then
 
@@ -15,7 +16,7 @@ if which testctl 2>/dev/null; then
     # which case, push the docker image in question onto the remote host via
     # 'testctl ssh'.
     docker save "${1}" | pv \
-        | ../testing/testctl-ssh.sh -- docker load
+        | ${DIR}/../testing/testctl-ssh.sh -- docker load
 
 else
     # Detect if minikube was started with --vm-driver=none by inspecting the output
