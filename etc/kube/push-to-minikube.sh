@@ -15,7 +15,7 @@ if which testctl 2>/dev/null; then
     # which case, push the docker image in question onto the remote host via
     # 'testctl ssh'.
     docker save "${1}" |gzip | pv \
-        | ../testing/testctl-ssh.sh -- sh -c 'gzip -d | docker load'
+        | ./etc/testing/testctl-ssh.sh -- sh -c 'gzip -d | docker load'
 
 else
     # Detect if minikube was started with --vm-driver=none by inspecting the output

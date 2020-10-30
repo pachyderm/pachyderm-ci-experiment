@@ -53,13 +53,13 @@ echo "Running test suite based on BUCKET=$BUCKET"
 #make docker-build
 for X in worker pachd; do
     echo "Copying pachyderm/$X:local to kube"
-    docker save pachyderm/$X:local |gzip | pv | ../testing/testctl-ssh.sh -- sh -c 'gzip -d | docker load'
+    docker save pachyderm/$X:local |gzip | pv | ./etc/testing/testctl-ssh.sh -- sh -c 'gzip -d | docker load'
 done
 make launch-dev
 
 pachctl config update context "$(pachctl config get active-context)" --pachd-address="${VM_IP}:${PACH_PORT}"
 
-# should be able to connect to pachyderm via the forwarded port 
+# should be able to connect to pachyderm via the forwarded port
 pachctl version
 
 function test_bucket {
