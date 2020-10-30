@@ -6,15 +6,13 @@ set -xeuo pipefail
 rm -f "${HOME}"/.pachyderm/config.json
 
 # Get a kubernetes cluster
-echo before
-ls -alh
-
 # Specify the slot so that future builds on this branch+suite id automatically
 # clean up previous VMs
 DEBUG_WEBSOCKETS=1 testctl get --config .testfaster.yml --slot "${CIRCLE_BRANCH},${BUCKET}"
 
-echo after
-ls -alh
+echo "ENT_ACT_CODE=${ENT_ACT_CODE}"
+echo "decoded:"
+echo "$ENT_ACT_CODE" |base64 -d | jq .
 
 KUBECONFIG="$(pwd)/kubeconfig"
 export KUBECONFIG
