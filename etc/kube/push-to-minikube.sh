@@ -14,8 +14,8 @@ if which testctl 2>/dev/null; then
     # Assume we're using testfaster if the testfaster CLI is installed.  In
     # which case, push the docker image in question onto the remote host via
     # 'testctl ssh'.
-    docker save "${1}" |gzip | pv \
-        | ./etc/testing/testctl-ssh.sh -- sh -c 'gzip -d | docker load'
+    docker save "${1}" | pv \
+        | ./etc/testing/testctl-ssh.sh -- docker load
 
 else
     # Detect if minikube was started with --vm-driver=none by inspecting the output
