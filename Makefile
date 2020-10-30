@@ -19,6 +19,7 @@ MINIKUBE_MEM=8192 # MB of memory allocated to minikube
 MINIKUBE_CPU=4 # Number of CPUs allocated to minikube
 
 GOFLAGS="-mod=vendor"
+export GOFLAGS
 
 ifdef TRAVIS_BUILD_NUMBER
 	# Upper bound for travis test timeout
