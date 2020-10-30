@@ -52,7 +52,7 @@ echo "Running test suite based on BUCKET=$BUCKET"
 #make docker-build
 for X in worker pachd; do
     echo "Copying pachyderm/$X:local to kube"
-    docker save pachyderm/$X:local |gzip | pv | testctl ssh --tty=false -- sh -c 'gzip -d | docker load'
+    docker save pachyderm/$X:local |gzip | pv | ../testing/testctl-ssh.sh -- sh -c 'gzip -d | docker load'
 done
 make launch-dev
 
