@@ -19,9 +19,10 @@ ls -alh
 KUBECONFIG="$(pwd)/kubeconfig"
 export KUBECONFIG
 
-# TODO: replace this with `testctl ip`
-#VM_IP=$(grep server kubeconfig |cut -d ':' -f 3 |sed 's/\/\///')
-#export VM_IP
+VM_IP=$(grep "##EXTERNAL_IP=" "$KUBECONFIG" |cut -d '=' -f 2-)
+export VM_IP
+PACH_PORT=$(grep "##PACH_FORWARDED_PORT=" "$KUBECONFIG" |cut -d '=' -f 2-)
+export PACH_PORT
 
 kubectl version
 
@@ -56,14 +57,10 @@ for X in worker pachd; do
 done
 make launch-dev
 
-# should be able to connect to pachyderm via KUBECONFIG
+pachctl config update context "$(pachctl config get active-context)" --pachd-address="${VM_IP}:${PACH_PORT}"
+
+# should be able to connect to pachyderm via the forwarded port 
 pachctl version
-
-pachctl port-forward &
-PORTFORWARD_PID=$!
-sleep 5
-
-#pachctl config update context "$(pachctl config get active-context)" --pachd-address="$VM_IP:30650"
 
 function test_bucket {
     package="${1}"
@@ -144,5 +141,3 @@ case "${BUCKET}" in
     exit 1
     ;;
 esac
-
-kill $PORTFORWARD_PID
