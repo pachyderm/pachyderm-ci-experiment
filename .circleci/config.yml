@@ -23,7 +23,7 @@ jobs:
       - run: make docker-build
 
       - run: |
-          sudo apt update && sudo apt install -y pv shellcheck
+          sudo apt update && sudo apt install -y pv shellcheck moreutils
 
       - run: |
           curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
@@ -42,18 +42,18 @@ jobs:
           sudo chmod +x /usr/local/bin/testctl
           testctl login --token "$TESTFASTER_TOKEN"
 
-      - run: etc/testing/github_tests.sh
+      - run: etc/testing/github_tests.sh 2>&1 |ts
 
       # retry on failure
       - run:
           name: Test (retry 2)
-          command: etc/testing/github_tests.sh
+          command: etc/testing/github_tests.sh 2>&1 |ts
           when: on_fail
 
       # retry on failure again...
       - run:
           name: Test (retry 3)
-          command: etc/testing/github_tests.sh
+          command: etc/testing/github_tests.sh 2>&1 |ts
           when: on_fail
 
 
