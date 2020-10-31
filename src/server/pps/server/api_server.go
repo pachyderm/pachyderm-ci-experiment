@@ -17,6 +17,7 @@ import (
 	"unicode"
 
 	"github.com/golang/protobuf/ptypes"
+	"github.com/itchyny/gojq"
 	"github.com/pachyderm/pachyderm/src/client"
 	"github.com/pachyderm/pachyderm/src/client/auth"
 	"github.com/pachyderm/pachyderm/src/client/limit"
@@ -34,9 +35,11 @@ import (
 	"github.com/pachyderm/pachyderm/src/server/pkg/log"
 	"github.com/pachyderm/pachyderm/src/server/pkg/lokiutil"
 	"github.com/pachyderm/pachyderm/src/server/pkg/metrics"
+	ppath "github.com/pachyderm/pachyderm/src/server/pkg/path"
 	"github.com/pachyderm/pachyderm/src/server/pkg/ppsconsts"
 	"github.com/pachyderm/pachyderm/src/server/pkg/ppsdb"
 	"github.com/pachyderm/pachyderm/src/server/pkg/ppsutil"
+	"github.com/pachyderm/pachyderm/src/server/pkg/serde"
 	"github.com/pachyderm/pachyderm/src/server/pkg/serviceenv"
 	txnenv "github.com/pachyderm/pachyderm/src/server/pkg/transactionenv"
 	"github.com/pachyderm/pachyderm/src/server/pkg/uuid"
@@ -616,7 +619,7 @@ func (a *apiServer) InspectJob(ctx context.Context, request *pps.InspectJobReque
 		if err != nil {
 			return nil, err
 		}
-		if err := a.listJob(pachClient, nil, ci.Commit, nil, -1, false, func(ji *pps.JobInfo) error {
+		if err := a.listJob(pachClient, nil, ci.Commit, nil, -1, false, "", func(ji *pps.JobInfo) error {
 			if request.Job != nil {
 				return errors.Errorf("internal error, more than 1 Job has output commit: %v (this is likely a bug)", request.OutputCommit)
 			}
@@ -696,7 +699,7 @@ func (a *apiServer) InspectJob(ctx context.Context, request *pps.InspectJobReque
 // ListJobStream.
 func (a *apiServer) listJob(pachClient *client.APIClient, pipeline *pps.Pipeline,
 	outputCommit *pfs.Commit, inputCommits []*pfs.Commit, history int64, full bool,
-	f func(*pps.JobInfo) error) error {
+	jqFilter string, f func(*pps.JobInfo) error) error {
 	authIsActive := true
 	me, err := pachClient.WhoAmI(pachClient.Ctx(), &auth.WhoAmIRequest{})
 	if auth.IsErrNotActivated(err) {
@@ -738,6 +741,21 @@ func (a *apiServer) listJob(pachClient *client.APIClient, pipeline *pps.Pipeline
 		if err != nil {
 			return err
 		}
+	}
+	var jqCode *gojq.Code
+	var enc serde.Encoder
+	var jsonBuffer bytes.Buffer
+	if jqFilter != "" {
+		jqQuery, err := gojq.Parse(jqFilter)
+		if err != nil {
+			return err
+		}
+		jqCode, err = gojq.Compile(jqQuery)
+		if err != nil {
+			return err
+		}
+		// ensure field names and enum values match with --raw output
+		enc = serde.NewJSONEncoder(&jsonBuffer, serde.WithOrigName(true))
 	}
 	// specCommits holds the specCommits of pipelines that we're interested in
 	specCommits := make(map[string]bool)
@@ -784,6 +802,18 @@ func (a *apiServer) listJob(pachClient *client.APIClient, pipeline *pps.Pipeline
 		}
 		if !specCommits[jobInfo.SpecCommit.ID] {
 			return nil
+		}
+		if jqCode != nil {
+			jsonBuffer.Reset()
+			// convert jobInfo to a map[string]interface{} for use with gojq
+			enc.EncodeProto(jobInfo)
+			var jobInterface interface{}
+			json.Unmarshal(jsonBuffer.Bytes(), &jobInterface)
+			iter := jqCode.Run(jobInterface)
+			// treat either jq false-y value as rejection
+			if v, _ := iter.Next(); v == false || v == nil {
+				return nil
+			}
 		}
 		return f(jobInfo)
 	}
@@ -886,7 +916,7 @@ func (a *apiServer) ListJob(ctx context.Context, request *pps.ListJobRequest) (r
 	}(time.Now())
 	pachClient := a.env.GetPachClient(ctx)
 	var jobInfos []*pps.JobInfo
-	if err := a.listJob(pachClient, request.Pipeline, request.OutputCommit, request.InputCommit, request.History, request.Full, func(ji *pps.JobInfo) error {
+	if err := a.listJob(pachClient, request.Pipeline, request.OutputCommit, request.InputCommit, request.History, request.Full, request.JqFilter, func(ji *pps.JobInfo) error {
 		jobInfos = append(jobInfos, ji)
 		return nil
 	}); err != nil {
@@ -903,7 +933,7 @@ func (a *apiServer) ListJobStream(request *pps.ListJobRequest, resp pps.API_List
 		a.Log(request, fmt.Sprintf("stream containing %d JobInfos", sent), retErr, time.Since(start))
 	}(time.Now())
 	pachClient := a.env.GetPachClient(resp.Context())
-	return a.listJob(pachClient, request.Pipeline, request.OutputCommit, request.InputCommit, request.History, request.Full, func(ji *pps.JobInfo) error {
+	return a.listJob(pachClient, request.Pipeline, request.OutputCommit, request.InputCommit, request.History, request.Full, request.JqFilter, func(ji *pps.JobInfo) error {
 		if err := resp.Send(ji); err != nil {
 			return err
 		}
@@ -932,7 +962,7 @@ func (a *apiServer) FlushJob(request *pps.FlushJobRequest, resp pps.API_FlushJob
 		var jis []*pps.JobInfo
 		// FlushJob passes -1 for history because we don't know which version
 		// of the pipeline created the output commit.
-		if err := a.listJob(pachClient, nil, ci.Commit, nil, -1, false, func(ji *pps.JobInfo) error {
+		if err := a.listJob(pachClient, nil, ci.Commit, nil, -1, false, "", func(ji *pps.JobInfo) error {
 			jis = append(jis, ji)
 			return nil
 		}); err != nil {
@@ -1818,7 +1848,7 @@ func (a *apiServer) validatePipeline(pachClient *client.APIClient, pipelineInfo 
 		}
 		if pipelineInfo.Spout.Marker != "" {
 			// we need to make sure the marker name is also a valid file name, since it is used in file names
-			if err := hashtree.ValidatePath(pipelineInfo.Spout.Marker); err != nil || pipelineInfo.Spout.Marker == "out" {
+			if err := ppath.ValidatePath(pipelineInfo.Spout.Marker); err != nil || pipelineInfo.Spout.Marker == "out" {
 				return errors.Errorf("the spout marker name must be a valid filename: %v", pipelineInfo.Spout.Marker)
 			}
 		}
@@ -2328,6 +2358,40 @@ func (a *apiServer) CreatePipeline(ctx context.Context, request *pps.CreatePipel
 				pipelinePtr.Reason = ""
 				// Update pipeline parallelism
 				pipelinePtr.Parallelism = uint64(parallelism)
+
+				// Generate new pipeline auth token (added due to & add pipeline to the ACLs of input/output
+				// repos
+				if err := a.sudo(pachClient, func(superUserClient *client.APIClient) error {
+					oldAuthToken := pipelinePtr.AuthToken
+					tokenResp, err := superUserClient.GetAuthToken(superUserClient.Ctx(), &auth.GetAuthTokenRequest{
+						Subject: auth.PipelinePrefix + request.Pipeline.Name,
+						TTL:     -1,
+					})
+					if err != nil {
+						if auth.IsErrNotActivated(err) {
+							return nil // no auth work to do
+						}
+						return grpcutil.ScrubGRPC(err)
+					}
+					pipelinePtr.AuthToken = tokenResp.Token
+
+					// If getting a new auth token worked, we should revoke the old one
+					if oldAuthToken != "" {
+						_, err := superUserClient.RevokeAuthToken(superUserClient.Ctx(),
+							&auth.RevokeAuthTokenRequest{
+								Token: oldAuthToken,
+							})
+						if err != nil {
+							if auth.IsErrNotActivated(err) {
+								return nil // no auth work to do
+							}
+							return grpcutil.ScrubGRPC(err)
+						}
+					}
+					return nil
+				}); err != nil {
+					return err
+				}
 				return nil
 			})
 		}); err != nil {
@@ -2410,6 +2474,7 @@ func (a *apiServer) CreatePipeline(ctx context.Context, request *pps.CreatePipel
 		if err := a.sudo(pachClient, func(superUserClient *client.APIClient) error {
 			tokenResp, err := superUserClient.GetAuthToken(superUserClient.Ctx(), &auth.GetAuthTokenRequest{
 				Subject: auth.PipelinePrefix + request.Pipeline.Name,
+				TTL:     -1,
 			})
 			if err != nil {
 				if auth.IsErrNotActivated(err) {
@@ -2654,18 +2719,49 @@ func (a *apiServer) ListPipeline(ctx context.Context, request *pps.ListPipelineR
 }
 
 func (a *apiServer) listPipeline(pachClient *client.APIClient, request *pps.ListPipelineRequest, f func(*pps.PipelineInfo) error) error {
+	var jqCode *gojq.Code
+	var enc serde.Encoder
+	var jsonBuffer bytes.Buffer
+	if request.JqFilter != "" {
+		jqQuery, err := gojq.Parse(request.JqFilter)
+		if err != nil {
+			return err
+		}
+		jqCode, err = gojq.Compile(jqQuery)
+		if err != nil {
+			return err
+		}
+		// ensure field names and enum values match with --raw output
+		enc = serde.NewJSONEncoder(&jsonBuffer, serde.WithOrigName(true))
+	}
 	return a.listPipelinePtr(pachClient, request.Pipeline, request.History,
 		func(name string, ptr *pps.EtcdPipelineInfo) error {
+			var pipelineInfo *pps.PipelineInfo
+			var err error
 			if request.AllowIncomplete {
-				pipelineInfo, err := ppsutil.GetPipelineInfoAllowIncomplete(pachClient, name, ptr)
+				pipelineInfo, err = ppsutil.GetPipelineInfoAllowIncomplete(pachClient, name, ptr)
 				if err != nil {
 					return err
 				}
-				return f(pipelineInfo)
+			} else {
+				pipelineInfo, err = ppsutil.GetPipelineInfo(pachClient, name, ptr)
+				if err != nil {
+					return err
+				}
 			}
-			pipelineInfo, err := ppsutil.GetPipelineInfo(pachClient, name, ptr)
-			if err != nil {
-				return err
+			// apply jq filter to the full pipelineInfo object
+			// could have issues if the filter uses fields from .transform which aren't filled in due to AllowIncomplete
+			if jqCode != nil {
+				jsonBuffer.Reset()
+				// convert pipelineInfo to a map[string]interface{} for use with gojq
+				enc.EncodeProto(pipelineInfo)
+				var pipelineInterface interface{}
+				json.Unmarshal(jsonBuffer.Bytes(), &pipelineInterface)
+				iter := jqCode.Run(pipelineInterface)
+				// treat either jq false-y value as rejection
+				if v, _ := iter.Next(); v == false || v == nil {
+					return nil
+				}
 			}
 			return f(pipelineInfo)
 		})

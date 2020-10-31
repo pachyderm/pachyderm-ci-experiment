@@ -1,4 +1,4 @@
-name: Go
+name: Pachyderm
 
 on:
   push:
@@ -46,6 +46,7 @@ jobs:
         AUTH_BUCKETS: 2
         GOPROXY: https://proxy.golang.org
         BUCKET: ${{ matrix.bucket }}
+        ENT_ACT_CODE: ${{ secrets.ENT_ACT_CODE}}
 
     strategy:
       matrix:

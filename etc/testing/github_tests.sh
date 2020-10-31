@@ -1,25 +1,27 @@
 #!/bin/bash
 
-set -ex
+set -xeuo pipefail
 
 # In case we're retrying on a new cluster
 rm -f "${HOME}"/.pachyderm/config.json
 
 # Get a kubernetes cluster
-echo before
-ls -alh
+# Specify the slot so that future builds on this branch+suite id automatically
+# clean up previous VMs
+BRANCH="${CIRCLE_BRANCH:-$GITHUB_REF}"
+DEBUG_WEBSOCKETS=1 testctl get --config .testfaster.yml --slot "${BRANCH},${BUCKET}"
 
-testctl get --config .testfaster.yml
-
-echo after
-ls -alh
+echo "ENT_ACT_CODE=${ENT_ACT_CODE}"
+echo "decoded:"
+echo "$ENT_ACT_CODE" |base64 -d | jq .
 
 KUBECONFIG="$(pwd)/kubeconfig"
 export KUBECONFIG
 
-# TODO: replace this with `testctl ip`
-#VM_IP=$(grep server kubeconfig |cut -d ':' -f 3 |sed 's/\/\///')
-#export VM_IP
+VM_IP=$(grep "##EXTERNAL_IP=" "$KUBECONFIG" |cut -d '=' -f 2-)
+export VM_IP
+PACH_PORT=$(grep "##PACH_FORWARDED_PORT=" "$KUBECONFIG" |cut -d '=' -f 2-)
+export PACH_PORT
 
 kubectl version
 
@@ -46,17 +48,20 @@ echo "Running test suite based on BUCKET=$BUCKET"
 #docker pull "pachyderm/worker:${version}"
 #docker tag "pachyderm/worker:${version}" "pachyderm/worker:local"
 
-make docker-build
+# we assume 'make docker-build' has been done by a previous build step. see .circleci/config.yml
+#make docker-build
 for X in worker pachd; do
     echo "Copying pachyderm/$X:local to kube"
-    docker save pachyderm/$X:local |gzip | pv | testctl ssh --tty=false -- sh -c 'gzip -d | docker load'
+    docker save pachyderm/$X:local | pv | ./etc/testing/testctl-ssh.sh -- docker load
 done
 make launch-dev
 
-#pachctl config update context "$(pachctl config get active-context)" --pachd-address="$VM_IP:30650"
+pachctl config update context "$(pachctl config get active-context)" --pachd-address="${VM_IP}:${PACH_PORT}"
+
+# should be able to connect to pachyderm via the forwarded port
+pachctl version
 
 function test_bucket {
-    set +x
     package="${1}"
     target="${2}"
     bucket_num="${3}"
@@ -68,7 +73,7 @@ function test_bucket {
 
     echo "Running bucket $bucket_num of $num_buckets"
     # shellcheck disable=SC2207
-    tests=( $(go test -v  "${package}" -list ".*" | grep -v '^ok' | grep -v '^Benchmark') )
+    tests=( $(go test -mod=vendor -v  "${package}" -list ".*" | grep -v '^ok' | grep -v '^Benchmark') )
     total_tests="${#tests[@]}"
     # Determine the offset and length of the sub-array of tests we want to run
     # The last bucket may have a few extra tests, to accommodate rounding
@@ -79,7 +84,6 @@ function test_bucket {
     test_regex="$(IFS=\|; echo "${tests[*]:start:bucket_size}")"
     echo "Running ${bucket_size} tests of ${total_tests} total tests"
     make RUN="-run=\"${test_regex}\"" "${target}"
-    set -x
 }
 
 # Clean cached test results
@@ -124,13 +128,12 @@ case "${BUCKET}" in
     bucket_num="${BUCKET#PPS}"
     test_bucket "./src/server" test-pps "${bucket_num}" "${PPS_BUCKETS}"
     if [[ "${bucket_num}" -eq "${PPS_BUCKETS}" ]]; then
-      go test -v -count=1 ./src/server/pps/server -timeout 3600s
+      go test -mod=vendor -v -count=1 ./src/server/pps/server -timeout 300s
     fi
     ;;
  AUTH?)
     bucket_num="${BUCKET#AUTH}"
     test_bucket "./src/server/auth/server/testing" test-auth "${bucket_num}" "${AUTH_BUCKETS}"
-    set +x
     ;;
  *)
     echo "Unknown bucket"

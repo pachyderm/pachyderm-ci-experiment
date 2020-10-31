@@ -30,7 +30,7 @@ endif
 
 install:
 	# GOPATH/bin must be on your PATH to access these binaries:
-	go install -ldflags "$(LD_FLAGS)" -gcflags "$(GC_FLAGS)" ./src/server/cmd/pachctl
+	go install -mod=vendor -ldflags "$(LD_FLAGS)" -gcflags "$(GC_FLAGS)" ./src/server/cmd/pachctl
 
 install-clean:
 	@# Need to blow away pachctl binary if its already there
@@ -256,43 +256,43 @@ test-pfs-server:
 
 test-pfs-storage:
 	./etc/testing/start_postgres.sh
-	go test  -count=1 ./src/server/pkg/storage/... -timeout $(TIMEOUT)
+	go test -mod=vendor  -count=1 ./src/server/pkg/storage/... -timeout $(TIMEOUT)
 
 test-pps: launch-stats docker-build-spout-test docker-build-test-entrypoint
 	@# Use the count flag to disable test caching for this test suite.
 	PROM_PORT=$$(kubectl --namespace=monitoring get svc/prometheus -o json | jq -r .spec.ports[0].nodePort) \
-	  go test -v -count=1 ./src/server -parallel 1 -timeout $(TIMEOUT) $(RUN)
+	  go test -mod=vendor -v -count=1 ./src/server -parallel 1 -timeout $(TIMEOUT) $(RUN)
 
 test-cmds:
 	go install -v ./src/testing/match
-	CGOENABLED=0 go test -v -count=1 ./src/server/cmd/pachctl/cmd
-	go test -v -count=1 ./src/server/pkg/deploy/cmds -timeout $(TIMEOUT)
-	go test -v -count=1 ./src/server/pfs/cmds -timeout $(TIMEOUT)
-	go test -v -count=1 ./src/server/pps/cmds -timeout $(TIMEOUT)
-	go test -v -count=1 ./src/server/config -timeout $(TIMEOUT)
+	CGOENABLED=0 go test -mod=vendor -v -count=1 ./src/server/cmd/pachctl/cmd
+	go test -mod=vendor -v -count=1 ./src/server/pkg/deploy/cmds -timeout $(TIMEOUT)
+	go test -mod=vendor -v -count=1 ./src/server/pfs/cmds -timeout $(TIMEOUT)
+	go test -mod=vendor -v -count=1 ./src/server/pps/cmds -timeout $(TIMEOUT)
+	go test -mod=vendor -v -count=1 ./src/server/config -timeout $(TIMEOUT)
 	@# TODO(msteffen) does this test leave auth active? If so it must run last
-	go test -v -count=1 ./src/server/auth/cmds -timeout $(TIMEOUT)
+	go test -mod=vendor -v -count=1 ./src/server/auth/cmds -timeout $(TIMEOUT)
 
 test-transaction:
-	go test -count=1 ./src/server/transaction/server/testing -timeout $(TIMEOUT)
+	go test -mod=vendor -count=1 ./src/server/transaction/server/testing -timeout $(TIMEOUT)
 
 test-client:
-	go test -count=1 -cover $$(go list ./src/client/...)
+	go test -mod=vendor -count=1 -cover $$(go list ./src/client/...)
 
 test-libs:
-	go test -count=1 ./src/client/pkg/grpcutil -timeout $(TIMEOUT)
-	go test -count=1 ./src/server/pkg/collection -timeout $(TIMEOUT) -vet=off
-	go test -count=1 ./src/server/pkg/hashtree -timeout $(TIMEOUT)
-	go test -count=1 ./src/server/pkg/cert -timeout $(TIMEOUT)
-	go test -count=1 ./src/server/pkg/localcache -timeout $(TIMEOUT)
-	go test -count=1 ./src/server/pkg/work -timeout $(TIMEOUT)
+	go test -mod=vendor -count=1 ./src/client/pkg/grpcutil -timeout $(TIMEOUT)
+	go test -mod=vendor -count=1 ./src/server/pkg/collection -timeout $(TIMEOUT) -vet=off
+	go test -mod=vendor -count=1 ./src/server/pkg/hashtree -timeout $(TIMEOUT)
+	go test -mod=vendor -count=1 ./src/server/pkg/cert -timeout $(TIMEOUT)
+	go test -mod=vendor -count=1 ./src/server/pkg/localcache -timeout $(TIMEOUT)
+	go test -mod=vendor -count=1 ./src/server/pkg/work -timeout $(TIMEOUT)
 
 test-vault:
 	kill $$(cat /tmp/vault.pid) || true
 	./src/plugin/vault/etc/start-vault.sh
 	./src/plugin/vault/etc/pach-auth.sh --activate
 	./src/plugin/vault/etc/setup-vault.sh
-	go test -v -count=1 ./src/plugin/vault -timeout $(TIMEOUT)
+	go test -mod=vendor -v -count=1 ./src/plugin/vault -timeout $(TIMEOUT)
 	./src/plugin/vault/etc/pach-auth.sh --delete-all
 
 test-s3gateway-conformance:
@@ -310,23 +310,23 @@ test-s3gateway-integration:
 	$(INTEGRATION_SCRIPT_PATH) http://localhost:30600 --access-key=none --secret-key=none
 
 test-s3gateway-unit:
-	go test -v -count=1 ./src/server/pfs/s3 -timeout $(TIMEOUT)
+	go test -mod=vendor -v -count=1 ./src/server/pfs/s3 -timeout $(TIMEOUT)
 
 test-fuse:
-	CGOENABLED=0 go test -count=1 -cover $$(go list ./src/server/... | grep '/src/server/pfs/fuse')
+	CGOENABLED=0 go test -mod=vendor -count=1 -cover $$(go list ./src/server/... | grep '/src/server/pfs/fuse')
 
 test-local:
-	CGOENABLED=0 go test -count=1 -cover -short $$(go list ./src/server/... | grep -v '/src/server/pfs/fuse') -timeout $(TIMEOUT)
+	CGOENABLED=0 go test -mod=vendor -count=1 -cover -short $$(go list ./src/server/... | grep -v '/src/server/pfs/fuse') -timeout $(TIMEOUT)
 
 test-auth:
 	yes | pachctl delete all
-	go test -v -count=1 ./src/server/auth/server/testing -timeout $(TIMEOUT) $(RUN)
+	go test -mod=vendor -v -count=1 ./src/server/auth/server/testing -timeout $(TIMEOUT) $(RUN)
 
 test-admin:
-	go test -v -count=1 ./src/server/admin/server -timeout $(TIMEOUT)
+	go test -mod=vendor -v -count=1 ./src/server/admin/server -timeout $(TIMEOUT)
 
 test-enterprise:
-	go test -v -count=1 ./src/server/enterprise/server -timeout $(TIMEOUT)
+	go test -mod=vendor -v -count=1 ./src/server/enterprise/server -timeout $(TIMEOUT)
 
 test-tls:
 	./etc/testing/test_tls.sh
@@ -335,7 +335,7 @@ test-worker: launch-stats test-worker-helper
 
 test-worker-helper:
 	PROM_PORT=$$(kubectl --namespace=monitoring get svc/prometheus -o json | jq -r .spec.ports[0].nodePort) \
-	  go test -v -count=1 ./src/server/worker/ -timeout $(TIMEOUT)
+	  go test -mod=vendor -v -count=1 ./src/server/worker/ -timeout $(TIMEOUT)
 
 clean: clean-launch clean-launch-kube
 
@@ -393,7 +393,7 @@ clean-launch-loki:
 	helm uninstall loki
 
 launch-dex:
-	helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+	helm repo add stable https://charts.helm.sh/stable
 	helm repo update
 	helm upgrade --install --force dex stable/dex -f etc/testing/auth/dex.yaml
 	until timeout 1s bash -x ./etc/kube/check_ready.sh 'app.kubernetes.io/name=dex'; do sleep 1; done

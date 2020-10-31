@@ -42,6 +42,7 @@ import (
 	tu "github.com/pachyderm/pachyderm/src/server/pkg/testutil"
 	"github.com/pachyderm/pachyderm/src/server/pkg/uuid"
 	"github.com/pachyderm/pachyderm/src/server/pkg/workload"
+	pps_cmds "github.com/pachyderm/pachyderm/src/server/pps/cmds"
 	ppspretty "github.com/pachyderm/pachyderm/src/server/pps/pretty"
 	pps_server "github.com/pachyderm/pachyderm/src/server/pps/server"
 	"github.com/pachyderm/pachyderm/src/server/pps/server/githook"
@@ -2190,6 +2191,77 @@ func TestRecreatePipeline(t *testing.T) {
 	require.NoError(t, c.DeletePipeline(pipeline, false))
 	time.Sleep(5 * time.Second)
 	createPipeline()
+}
+
+// TestRecreateStandbyPipeline ensures that deleting and recreating a pipeline
+// with standby:true works. Because the PPS master now blocks after cancelling a
+// standby pipeline's 'monitorPipeline' goroutine, successfully recreating a
+// deleted pipeline proves that the old pipeline's `monitorPipeline` goroutine
+// successfully exited.
+//
+// This tests the fix for https://github.com/pachyderm/pachyderm/issues/5346
+func TestRecreateStandbyPipeline(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration tests in short mode")
+	}
+
+	c := tu.GetPachClient(t)
+	require.NoError(t, c.DeleteAll())
+
+	for i := 0; i < 2; i++ {
+		// Create a new data repo for each iteration, as it prevents the second
+		// iteration from having to process the first iteration's commit, and it
+		// doesn't affect the fidelity of the test (If DeletePipeline orphans the
+		// monitorPipeline goro, this pipeline should never leave STARTING because
+		// the pipeline controller should be blocked/crash)
+		dataRepo := tu.UniqueString(fmt.Sprintf("%s-%d-data", t.Name(), i))
+		require.NoError(t, c.CreateRepo(dataRepo))
+
+		// Create a standby-enabled pipeline
+		pipeline := tu.UniqueString(t.Name())
+		_, err := c.PpsAPIClient.CreatePipeline(context.Background(),
+			&pps.CreatePipelineRequest{
+				Pipeline: client.NewPipeline(pipeline),
+				Transform: &pps.Transform{
+					Cmd: []string{"sh"},
+					Stdin: []string{
+						"echo $PPS_POD_NAME >/pfs/out/pod",
+					},
+				},
+				Input:           client.NewPFSInput(dataRepo, "/"),
+				Standby:         true,
+				ParallelismSpec: &pps.ParallelismSpec{Constant: 1},
+				ResourceRequests: &pps.ResourceSpec{
+					Cpu: 0.5,
+				},
+			},
+		)
+		require.NoError(t, err)
+		require.NoErrorWithinTRetry(t, time.Second*30, func() error {
+			pi, err := c.InspectPipeline(pipeline)
+			require.NoError(t, err)
+			if pi.State != pps.PipelineState_PIPELINE_STANDBY {
+				return fmt.Errorf("expected %q to be in STANDBY but was in %s", pipeline, pi.State)
+			}
+			return nil
+		})
+
+		// Run a job, to prove that 'monitorPipeline' is running and works
+		_, err = c.PutFile(dataRepo, "master", "/foo", strings.NewReader("data"))
+		require.NoError(t, err)
+		commitIter, err := c.FlushCommit([]*pfs.Commit{client.NewCommit(dataRepo, "master")}, nil)
+		require.NoError(t, err)
+		_, err = commitIter.Next()
+		require.NoError(t, err)
+
+		// Delete the pipeline and wait for it to disappear from etcd
+		require.NoError(t, c.DeletePipeline(pipeline, false))
+		require.NoErrorWithinTRetry(t, time.Second*30, func() error {
+			_, err := c.InspectPipeline(pipeline)
+			require.YesError(t, err)
+			return nil
+		})
+	}
 }
 
 func TestDeletePipeline(t *testing.T) {
@@ -7532,6 +7604,7 @@ func TestListJobOutput(t *testing.T) {
 		t.Skip("Skipping integration tests in short mode")
 	}
 	c := tu.GetPachClient(t)
+	require.NoError(t, c.DeleteAll())
 
 	dataRepo := tu.UniqueString("TestListJobOutput_data")
 	require.NoError(t, c.CreateRepo(dataRepo))
@@ -7587,6 +7660,7 @@ func TestListJobTruncated(t *testing.T) {
 		t.Skip("Skipping integration tests in short mode")
 	}
 	c := tu.GetPachClient(t)
+	require.NoError(t, c.DeleteAll())
 
 	dataRepo := tu.UniqueString("TestListJobTruncated_data")
 	require.NoError(t, c.CreateRepo(dataRepo))
@@ -7642,6 +7716,68 @@ func TestListJobTruncated(t *testing.T) {
 		require.NotNil(t, fullJobInfos[0].Transform)
 		require.NotNil(t, fullJobInfos[0].Input)
 		require.Equal(t, pipeline, fullJobInfos[0].Pipeline.Name)
+		return nil
+	}, backoff.NewTestingBackOff()))
+}
+
+func TestListJobFilter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration tests in short mode")
+	}
+	c := tu.GetPachClient(t)
+	require.NoError(t, c.DeleteAll())
+
+	dataRepo := tu.UniqueString("TestListJobFiltered_data")
+	require.NoError(t, c.CreateRepo(dataRepo))
+
+	_, err := c.PutFile(dataRepo, "master", "file", strings.NewReader("foo"))
+	require.NoError(t, err)
+
+	pipeline := tu.UniqueString("pipeline")
+	require.NoError(t, c.CreatePipeline(
+		pipeline,
+		"",
+		[]string{"bash"},
+		[]string{
+			fmt.Sprintf("cp /pfs/%s/* /pfs/out/", dataRepo),
+		},
+		nil,
+		client.NewPFSInput(dataRepo, "/*"),
+		"",
+		false,
+	))
+
+	successFilter, err := pps_cmds.ParseJobStates([]string{"starting", "running", "success", "merging"})
+	require.Nil(t, err)
+	failureFilter, err := pps_cmds.ParseJobStates([]string{"failure"})
+	require.Nil(t, err)
+
+	require.NoError(t, backoff.Retry(func() error {
+		allJobInfos, err := c.ListJob("", nil, nil, 0, true)
+		if err != nil {
+			return err
+		}
+		var successInfos, failureInfos []*pps.JobInfo
+		err = c.ListJobFilterF("", nil, nil, 0, true, successFilter, func(ji *pps.JobInfo) error {
+			successInfos = append(successInfos, ji)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		err = c.ListJobFilterF("", nil, nil, 0, true, failureFilter, func(ji *pps.JobInfo) error {
+			failureInfos = append(failureInfos, ji)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		if len(allJobInfos) != 1 {
+			return errors.Errorf("expected 1 job from ListJob")
+		}
+		// check that the job matches our acceptable state filter, and that we found no failed jobs
+		require.Equal(t, len(successInfos), 1)
+		require.Equal(t, len(failureInfos), 0)
 		return nil
 	}, backoff.NewTestingBackOff()))
 }
