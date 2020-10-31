@@ -8,7 +8,8 @@ rm -f "${HOME}"/.pachyderm/config.json
 # Get a kubernetes cluster
 # Specify the slot so that future builds on this branch+suite id automatically
 # clean up previous VMs
-DEBUG_WEBSOCKETS=1 testctl get --config .testfaster.yml --slot "${CIRCLE_BRANCH},${BUCKET}"
+BRANCH="${CIRCLE_BRANCH:-$GITHUB_REF}"
+DEBUG_WEBSOCKETS=1 testctl get --config .testfaster.yml --slot "${BRANCH},${BUCKET}"
 
 echo "ENT_ACT_CODE=${ENT_ACT_CODE}"
 echo "decoded:"
