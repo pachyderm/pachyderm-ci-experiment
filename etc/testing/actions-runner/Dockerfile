@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install -y pv shellcheck unzip build-essential \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /runner
+
 # install github actions runner
 RUN curl -o actions-runner-linux-x64.tar.gz -L https://github.com/actions/runner/releases/download/v${GH_ACTIONS_RUNNER_VERSION}/actions-runner-linux-x64-${GH_ACTIONS_RUNNER_VERSION}.tar.gz \
     && tar xzf ./actions-runner-linux-x64.tar.gz \
