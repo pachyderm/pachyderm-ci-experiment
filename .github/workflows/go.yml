@@ -37,6 +37,9 @@ jobs:
           echo "$(pwd)/bin" >> $GITHUB_PATH
           bin/testctl login --token ${{ secrets.TESTFASTER_TOKEN }}
 
+    - name: Build pachd docker images
+      run: make docker-build
+
     - name: Test
       # Send stderr to stdout to try and avoid interleaving stdout and stderr
       # bug in github actions. They're indistinguishable anyway.
@@ -46,7 +49,31 @@ jobs:
         AUTH_BUCKETS: 2
         GOPROXY: https://proxy.golang.org
         BUCKET: ${{ matrix.bucket }}
-        ENT_ACT_CODE: ${{ secrets.ENT_ACT_CODE}}
+        ENT_ACT_CODE: ${{ secrets.ENT_ACT_CODE }}
+
+    - name: Test (retry 2)
+      if: ${{ failure() }}
+      # Send stderr to stdout to try and avoid interleaving stdout and stderr
+      # bug in github actions. They're indistinguishable anyway.
+      run: etc/testing/github_tests.sh 2>&1
+      env:
+        PPS_BUCKETS: 6
+        AUTH_BUCKETS: 2
+        GOPROXY: https://proxy.golang.org
+        BUCKET: ${{ matrix.bucket }}
+        ENT_ACT_CODE: ${{ secrets.ENT_ACT_CODE }}
+
+    - name: Test (retry 3)
+      if: ${{ failure() }}
+      # Send stderr to stdout to try and avoid interleaving stdout and stderr
+      # bug in github actions. They're indistinguishable anyway.
+      run: etc/testing/github_tests.sh 2>&1
+      env:
+        PPS_BUCKETS: 6
+        AUTH_BUCKETS: 2
+        GOPROXY: https://proxy.golang.org
+        BUCKET: ${{ matrix.bucket }}
+        ENT_ACT_CODE: ${{ secrets.ENT_ACT_CODE }}
 
     strategy:
       matrix:
