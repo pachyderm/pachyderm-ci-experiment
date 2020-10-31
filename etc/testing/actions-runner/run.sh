@@ -9,8 +9,7 @@ if [ ! -f .env ]; then
     echo
     exit 1
 fi
-docker-compose up -d
+docker-compose down
+docker-compose build
 set -o allexport; source .env; set +o allexport
-if [ "$GH_RUNNER_REPLICAS" != "" ]; then
-    docker-compose scale runner=$GH_RUNNER_REPLICAS
-fi
+docker-compose up --scale runner=$GH_RUNNER_REPLICAS -d
