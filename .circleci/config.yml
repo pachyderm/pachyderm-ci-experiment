@@ -18,12 +18,24 @@ jobs:
       BUCKET: << parameters.bucket >>
 
     steps:
-      - checkout
-
-      - run: make docker-build
-
       - run: |
           sudo apt update && sudo apt install -y pv shellcheck moreutils
+
+      - checkout
+
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+
+      - run: |
+          make install
+          make docker-build
+
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build"
 
       - run: |
           curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
