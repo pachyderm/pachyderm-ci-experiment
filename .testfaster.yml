@@ -38,7 +38,7 @@ base:
 
 runtime:
   cpus: 4
-  memory: 2GB
+  memory: 4GB
   disk: 20GB
 
 prewarm_pool_size: 24

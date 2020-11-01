@@ -17,6 +17,8 @@ jobs:
       GOPROXY: https://proxy.golang.org
       BUCKET: << parameters.bucket >>
 
+    resource_class: large
+
     steps:
       - run: |
           sudo apt update && sudo apt install -y pv shellcheck moreutils
