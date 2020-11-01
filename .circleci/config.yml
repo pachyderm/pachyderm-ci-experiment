@@ -25,20 +25,6 @@ jobs:
 
       - checkout
 
-      - restore_cache:
-          keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
-
-      - run: |
-          make install
-          make docker-build
-
-      - save_cache:
-          key: go-mod-v1-{{ checksum "go.sum" }}
-          paths:
-            - "~/go/pkg/mod"
-            - "~/.cache/go-build"
-
       - run: |
           set -x
           sudo curl -sSL -o /usr/local/bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl

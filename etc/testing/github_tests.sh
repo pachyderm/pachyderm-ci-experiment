@@ -20,11 +20,6 @@ echo "$ENT_ACT_CODE" |base64 -d | jq .
 
 # [x]: get docker image over there (well, we did already)
 # we assume 'make docker-build' has been done by a previous build step. see .circleci/config.yml
-#make docker-build
-for X in worker pachd; do
-    echo "Copying pachyderm/$X:local to kube"
-    docker save pachyderm/$X:local | pv | ./etc/testing/testctl-ssh.sh -- docker load
-done
 
 # [ ]: send files across
 ./etc/testing/testctl-scp.sh . /root/

@@ -27,7 +27,10 @@ base:
     # pin the version of pachyderm we use for prewarm script, so at least it's
     # reproducible. if pachyderm changes the things being brought up in here,
     # we'll want to bump this hash.
-    git checkout 4ad21486691182526c3d03cffb296657b722be4e
+    git checkout 2e75668aa915061917d51db33ca9bbe65b7f95df
+
+    make install
+    make docker-build
 
     helm version
     make launch-loki
