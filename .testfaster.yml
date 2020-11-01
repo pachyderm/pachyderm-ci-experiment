@@ -13,7 +13,7 @@ base:
 
   os_dockerfile: |-
     FROM quay.io/testfaster/kube-ubuntu
-    RUN apt-get update && apt-get install -y build-essential gettext-base socat
+    RUN apt-get update && apt-get install -y build-essential gettext-base socat shellcheck
 
   prewarm_script: |-
     #!/bin/bash
@@ -32,7 +32,15 @@ base:
     helm version
     make launch-loki
 
-    # hello!
+    # helm
+    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+    chmod +x get_helm.sh
+    sudo ./get_helm.sh
+    rm ./get_helm.sh # stop shellcheck complaining!
+
+    # kubectl
+    sudo curl -sSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.3/bin/linux/amd64/kubectl
+    sudo chmod +x /usr/local/bin/kubectl
 
   kubernetes_version: 'v1.18.3'
 

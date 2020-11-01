@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - run: |
-          sudo apt update && sudo apt install -y pv shellcheck moreutils
+          sudo apt update && sudo apt install -y pv moreutils
 
       - checkout
 
@@ -38,17 +38,6 @@ jobs:
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build"
-
-      - run: |
-          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
-          chmod +x get_helm.sh
-          sudo ./get_helm.sh
-          rm ./get_helm.sh # stop shellcheck complaining!
-
-      - run: |
-          set -x
-          sudo curl -sSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.3/bin/linux/amd64/kubectl
-          sudo chmod +x /usr/local/bin/kubectl
 
       - run: |
           set -x
@@ -69,7 +58,6 @@ jobs:
           name: Test (retry 3)
           command: etc/testing/github_tests.sh 2>&1 |ts
           when: on_fail
-
 
 workflows:
   all-tests:
