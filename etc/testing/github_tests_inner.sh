@@ -1,12 +1,9 @@
 #!/bin/bash
 set -xeuo pipefail
 
-KUBECONFIG="$(pwd)/kubeconfig"
-export KUBECONFIG
-
-VM_IP=$(grep "##EXTERNAL_IP=" "$KUBECONFIG" |cut -d '=' -f 2-)
+VM_IP="localhost"
 export VM_IP
-PACH_PORT=$(grep "##PACH_FORWARDED_PORT=" "$KUBECONFIG" |cut -d '=' -f 2-)
+PACH_PORT="30650"
 export PACH_PORT
 
 kubectl version

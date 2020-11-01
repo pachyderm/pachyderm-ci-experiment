@@ -11,6 +11,9 @@ rm -f "${HOME}"/.pachyderm/config.json
 BRANCH="${CIRCLE_BRANCH:-$GITHUB_REF}"
 DEBUG_WEBSOCKETS=1 testctl get --config .testfaster.yml --slot "${BRANCH},${BUCKET}"
 
+KUBECONFIG="$(pwd)/kubeconfig"
+export KUBECONFIG
+
 echo "ENT_ACT_CODE=${ENT_ACT_CODE}"
 echo "decoded:"
 echo "$ENT_ACT_CODE" |base64 -d | jq .
