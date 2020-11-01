@@ -24,7 +24,7 @@ for X in worker pachd; do
 done
 
 # [ ]: send files across
-./etc/testing/testctl-scp.sh . /root/testenv
+./etc/testing/testctl-scp.sh . /root/
 
 # [ ]: get pachctl binary over there
 ./etc/testing/testctl-scp.sh $(which pachctl) /usr/local/bin/pachctl
