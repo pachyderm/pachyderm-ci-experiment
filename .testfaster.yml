@@ -14,6 +14,7 @@ base:
   os_dockerfile: |-
     FROM quay.io/testfaster/kube-ubuntu
     RUN apt-get update && apt-get install -y build-essential gettext-base socat shellcheck golang-go rsync
+    RUN echo "AcceptEnv ENT_ACT_CODE BUCKET" >> /etc/ssh/sshd_config
 
   prewarm_script: |-
     #!/bin/bash

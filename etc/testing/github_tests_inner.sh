@@ -5,12 +5,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd "$DIR"/../..
 
-# these are env vars that are snuck in via allowed LC_* variables via SendEnv
-BUCKET="$LC_BUCKET"
-export BUCKET
-ENT_ACT_CODE="$LC_ENT_ACT_CODE"
-export ENT_ACT_CODE
-
 VM_IP="localhost"
 export VM_IP
 PACH_PORT="30650"
