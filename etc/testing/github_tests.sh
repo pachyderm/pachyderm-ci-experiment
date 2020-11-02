@@ -21,7 +21,7 @@ echo "$ENT_ACT_CODE" |base64 -d | jq .
 # [x]: get docker image over there (well, we did already)
 # we assume 'make docker-build' has been done by a previous build step. see .circleci/config.yml
 
-# [ ]: send files across
+# [ ]: send files across TODO: make this use rsync --delete
 ./etc/testing/testctl-scp.sh . /root/
 
 # [ ]: get pachctl binary over there

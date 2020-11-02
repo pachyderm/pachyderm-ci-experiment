@@ -13,7 +13,7 @@ base:
 
   os_dockerfile: |-
     FROM quay.io/testfaster/kube-ubuntu
-    RUN apt-get update && apt-get install -y build-essential gettext-base socat shellcheck
+    RUN apt-get update && apt-get install -y build-essential gettext-base socat shellcheck golang-go
 
   prewarm_script: |-
     #!/bin/bash
@@ -29,21 +29,13 @@ base:
     # we'll want to bump this hash.
     git checkout 2e75668aa915061917d51db33ca9bbe65b7f95df
 
+    # warm up go mod cache and go build cache
     make install
+    # warm up docker buildkit go mod cache and go build cache
     make docker-build
 
     helm version
     make launch-loki
-
-    # helm
-    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
-    chmod +x get_helm.sh
-    sudo ./get_helm.sh
-    rm ./get_helm.sh # stop shellcheck complaining!
-
-    # kubectl
-    sudo curl -sSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.3/bin/linux/amd64/kubectl
-    sudo chmod +x /usr/local/bin/kubectl
 
   kubernetes_version: 'v1.18.3'
 
