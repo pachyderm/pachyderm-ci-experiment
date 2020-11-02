@@ -3,9 +3,8 @@ version: 2.1
 
 jobs:
   test:
-    machine:
-      docker_layer_caching: true
-      image: ubuntu-2004:202010-01
+    docker:
+      image: cimg/base:2020.11
 
     parameters:
       bucket:
@@ -17,7 +16,7 @@ jobs:
       GOPROXY: https://proxy.golang.org
       BUCKET: << parameters.bucket >>
 
-    resource_class: large
+    #resource_class: large
 
     steps:
       - run: |
