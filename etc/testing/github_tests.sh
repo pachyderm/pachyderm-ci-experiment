@@ -9,7 +9,7 @@ rm -f "${HOME}"/.pachyderm/config.json
 # Specify the slot so that future builds on this branch+suite id automatically
 # clean up previous VMs
 BRANCH="${CIRCLE_BRANCH:-$GITHUB_REF}"
-DEBUG_WEBSOCKETS=1 testctl get --config .testfaster.yml --slot "${BRANCH},${BUCKET}"
+testctl get --config .testfaster.yml --slot "${BRANCH},${BUCKET}"
 
 KUBECONFIG="$(pwd)/kubeconfig"
 export KUBECONFIG
@@ -22,10 +22,10 @@ echo "$ENT_ACT_CODE" |base64 -d | jq .
 # we assume 'make docker-build' has been done by a previous build step. see .circleci/config.yml
 
 # [ ]: send files across TODO: make this use rsync --delete
-./etc/testing/testctl-scp.sh . /root/
+./etc/testing/testctl-rsync.sh . /root/
 
 # [ ]: get pachctl binary over there
-./etc/testing/testctl-scp.sh $(which pachctl) /usr/local/bin/pachctl
+./etc/testing/testctl-rsync.sh $(which pachctl) /usr/local/bin/pachctl
 
 # [x]: pass environment variables through, at least ENT_ACT_CODE, BUCKET
 # [x]: pass arguments over
