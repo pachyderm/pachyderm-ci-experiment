@@ -4,7 +4,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      image: cimg/base:2020.11
+    - image: cimg/base:2020.11
 
     parameters:
       bucket:
