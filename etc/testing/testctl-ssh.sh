@@ -6,4 +6,4 @@ grep "##PRIVATE_KEY_ONELINER=" "$KUBECONFIG" |cut -d '=' -f 2- |base64 -d > id_r
 chmod 0600 id_rsa
 pwd
 ls -alh
-exec ssh -vvv -i $(pwd)/id_rsa -p "$PORT" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@"$IP" "$@"
+exec ssh -i $(pwd)/id_rsa -p "$PORT" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@"$IP" "$@"
