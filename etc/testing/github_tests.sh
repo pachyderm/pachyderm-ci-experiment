@@ -26,6 +26,9 @@ export KUBECONFIG
 # workaround https://serverfault.com/questions/482907/setting-a-variable-for-a-given-ssh-host
 
 ./etc/testing/testctl-ssh.sh \
+    -o SendEnv=PPS_BUCKETS \
+    -o SendEnv=AUTH_BUCKETS \
+    -o SendEnv=GOPROXY \
     -o SendEnv=ENT_ACT_CODE \
     -o SendEnv=BUCKET \
     -- ./project/etc/testing/github_tests_inner.sh "$@"
