@@ -14,10 +14,6 @@ testctl get --config .testfaster.yml --slot "${BRANCH},${BUCKET}"
 KUBECONFIG="$(pwd)/kubeconfig"
 export KUBECONFIG
 
-echo "ENT_ACT_CODE=${ENT_ACT_CODE}"
-echo "decoded:"
-echo "$ENT_ACT_CODE" |base64 -d | jq .
-
 # [x]: get docker image over there (well, we did already)
 # we assume 'make docker-build' has been done by a previous build step. see .circleci/config.yml
 
