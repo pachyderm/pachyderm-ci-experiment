@@ -26,8 +26,16 @@ echo "$ENT_ACT_CODE" |base64 -d | jq .
 
 # [x]: pass environment variables through, at least ENT_ACT_CODE, BUCKET
 # [x]: pass arguments over
+
+# workaround https://serverfault.com/questions/482907/setting-a-variable-for-a-given-ssh-host
+
+LC_ENT_ACT_CODE="$ENT_ACT_CODE"
+export LC_ENT_ACT_CODE
+LC_BUCKET="$BUCKET"
+export LC_BUCKET
+
 ./etc/testing/testctl-ssh.sh \
-    -o SendEnv=ENT_ACT_CODE \
-    -o SendEnv=BUCKET \
+    -o SendEnv=LC_ENT_ACT_CODE \
+    -o SendEnv=LC_BUCKET \
     -- ./project/etc/testing/github_tests_inner.sh "$@"
 
