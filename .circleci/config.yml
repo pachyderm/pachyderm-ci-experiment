@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - run: |
-          sudo apt update && sudo apt install -y pv moreutils
+          sudo apt update && sudo apt install -y pv moreutils rsync
 
       - checkout
 
