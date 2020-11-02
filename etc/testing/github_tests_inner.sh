@@ -9,6 +9,10 @@ VM_IP="localhost"
 export VM_IP
 PACH_PORT="30650"
 export PACH_PORT
+GOPATH="${HOME}/go"
+export GOPATH
+PATH="${GOPATH}/bin:${PATH}"
+export PATH
 
 kubectl version
 
