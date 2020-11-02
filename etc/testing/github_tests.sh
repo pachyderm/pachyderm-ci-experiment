@@ -22,12 +22,12 @@ echo "$ENT_ACT_CODE" |base64 -d | jq .
 # we assume 'make docker-build' has been done by a previous build step. see .circleci/config.yml
 
 # [ ]: send files across TODO: make this use rsync --delete
-./etc/testing/testctl-rsync.sh . /root/
+./etc/testing/testctl-rsync.sh . /root/project
 
 # [x]: pass environment variables through, at least ENT_ACT_CODE, BUCKET
 # [x]: pass arguments over
 ./etc/testing/testctl-ssh.sh \
     -o SendEnv=ENT_ACT_CODE \
     -o SendEnv=BUCKET \
-    -- ./etc/testing/github_tests_inner.sh "$@"
+    -- ./project/etc/testing/github_tests_inner.sh "$@"
 
