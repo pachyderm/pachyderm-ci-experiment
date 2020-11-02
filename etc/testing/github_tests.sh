@@ -24,9 +24,6 @@ echo "$ENT_ACT_CODE" |base64 -d | jq .
 # [ ]: send files across TODO: make this use rsync --delete
 ./etc/testing/testctl-rsync.sh . /root/
 
-# [ ]: get pachctl binary over there
-./etc/testing/testctl-rsync.sh $(which pachctl) /usr/local/bin/pachctl
-
 # [x]: pass environment variables through, at least ENT_ACT_CODE, BUCKET
 # [x]: pass arguments over
 ./etc/testing/testctl-ssh.sh \
