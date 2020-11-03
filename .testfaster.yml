@@ -15,31 +15,29 @@ base:
     FROM quay.io/testfaster/kube-ubuntu
     RUN apt-get update && apt-get install -y build-essential gettext-base socat shellcheck golang-go rsync jq pv
     RUN echo "AcceptEnv ENT_ACT_CODE BUCKET PPS_BUCKETS AUTH_BUCKETS GOPROXY" >> /etc/ssh/sshd_config
+    # TODO: switch this back to pachyderm/pachyderm once we land this
+    # experiment
+    RUN git clone https://github.com/pachyderm/pachyderm-ci-experiment pachyderm
+    # warm up go mod cache and go build cache
+    RUN cd pachyderm && \
+        git checkout e8c7bde803f5161a937dc55a84003750d619a51b && \
+        make install
 
-  docker_bake_script: ""
+  docker_bake_script: |-
+    #!/bin/bash
+    set -euo pipefail
+    cd ~/pachyderm
+    # warm up docker buildkit go mod cache and go build cache
+    make docker-build
+    # build docker images that are used in PPS tests
+    (cd etc/testing/images/ubuntu_with_s3_clients; make push-to-minikube)
+    make docker-build-kafka
 
   prewarm_script: |-
     #!/bin/bash
     set -euo pipefail
 
-    # TODO: switch this back to pachyderm/pachyderm once we land this
-    # experiment
-    git clone https://github.com/pachyderm/pachyderm-ci-experiment pachyderm
     cd pachyderm
-
-    # pin the version of pachyderm we use for prewarm script, so at least it's
-    # reproducible. if pachyderm changes the things being brought up in here,
-    # we'll want to bump this hash.
-    git checkout e8c7bde803f5161a937dc55a84003750d619a51b
-
-    # warm up go mod cache and go build cache
-    make install
-    # warm up docker buildkit go mod cache and go build cache
-    make docker-build
-
-    # build docker images that are used in PPS tests
-    (cd etc/testing/images/ubuntu_with_s3_clients; make push-to-minikube)
-    make docker-build-kafka
 
     # start services used by tests
     make launch-loki
