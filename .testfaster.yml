@@ -16,6 +16,8 @@ base:
     RUN apt-get update && apt-get install -y build-essential gettext-base socat shellcheck golang-go rsync jq pv
     RUN echo "AcceptEnv ENT_ACT_CODE BUCKET PPS_BUCKETS AUTH_BUCKETS GOPROXY" >> /etc/ssh/sshd_config
 
+  docker_bake_script: ""
+
   prewarm_script: |-
     #!/bin/bash
     set -euo pipefail
