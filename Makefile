@@ -6,9 +6,12 @@
 
 RUN= # used by go tests to decide which tests to run (i.e. passed to -run)
 # Label it w the go version we bundle in:
-export VERSION_ADDITIONAL = -$(shell git log --pretty=format:%H | head -n 1)
+# XXX make the following conditional on whether this is a release build
+#export VERSION_ADDITIONAL = -$(shell git log --pretty=format:%H | head -n 1)
+export VERSION_ADDITIONAL = "dev"
+
 LD_FLAGS = -X github.com/pachyderm/pachyderm/src/client/version.AdditionalVersion=$(VERSION_ADDITIONAL)
-export GC_FLAGS = "all=-trimpath=${PWD}"
+export GC_FLAGS = ""
 export DOCKER_BUILD_FLAGS
 
 CLUSTER_NAME?=pachyderm
