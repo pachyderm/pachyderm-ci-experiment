@@ -652,8 +652,10 @@ func TestMigrateFrom1_7(t *testing.T) {
 	require.NoError(t, c.DeleteAll())
 
 	// Restore dumped metadata (now that objects are present)
-	md, err := os.Open(path.Join(os.Getenv("GOPATH"),
-		"src/github.com/pachyderm/pachyderm/etc/testing/migration/v1_7/sort.metadata"))
+	// NB: this assumes the directory layout in CI: $HOME/projects/pachyderm
+	// TODO: replace pachyderm-ci-experiment with pachyderm when we land this
+	md, err := os.Open(path.Join(os.Getenv("HOME"),
+		"projects/pachyderm-ci-experiment/etc/testing/migration/v1_7/sort.metadata"))
 	require.NoError(t, err)
 	require.NoError(t, c.RestoreReader(snappy.NewReader(md)))
 	require.NoError(t, md.Close())
