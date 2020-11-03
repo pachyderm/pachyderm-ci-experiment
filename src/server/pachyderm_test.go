@@ -3268,6 +3268,7 @@ func TestUpdateFailedPipeline(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, c.FinishCommit(dataRepo, "master"))
 
+	// TODO: sleeps are evil, put this in a retry
 	// Wait for pod to try and pull the bad image
 	time.Sleep(10 * time.Second)
 	pipelineInfo, err := c.InspectPipeline(pipelineName)
