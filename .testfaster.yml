@@ -28,7 +28,7 @@ base:
     # pin the version of pachyderm we use for prewarm script, so at least it's
     # reproducible. if pachyderm changes the things being brought up in here,
     # we'll want to bump this hash.
-    git checkout 2e75668aa915061917d51db33ca9bbe65b7f95df
+    git checkout e8c7bde803f5161a937dc55a84003750d619a51b
 
     # warm up go mod cache and go build cache
     make install
