@@ -35,8 +35,13 @@ base:
     # warm up docker buildkit go mod cache and go build cache
     make docker-build
 
-    helm version
+    # build docker images that are used in PPS tests
+    (cd etc/testing/images/ubuntu_with_s3_clients; make push-to-minikube)
+    make docker-build-kafka
+
+    # start services used by tests
     make launch-loki
+    #make launch-dex # XXX doesn't seem to start, need to investigate
 
   kubernetes_version: 'v1.18.3'
 
