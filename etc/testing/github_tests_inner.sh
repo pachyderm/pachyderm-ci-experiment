@@ -9,6 +9,10 @@ echo "============= GO CACHE ============="
 find ~/.cache/go-build
 echo "========================================="
 
+echo "============= PACHYDERM ============="
+find ~/pachyderm
+echo "========================================="
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd "$DIR"/../..
