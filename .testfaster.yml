@@ -46,7 +46,6 @@ base:
     make docker-build-kafka
     echo "============= POST BAKE IMAGES =================="
     docker images
-    ls -alh /var/lib/docker
     echo "================================================="
 
   prewarm_script: |-
