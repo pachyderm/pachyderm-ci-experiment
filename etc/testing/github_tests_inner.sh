@@ -1,18 +1,6 @@
 #!/bin/bash
 set -xeuo pipefail
 
-echo "============= IMAGES BEFORE ============="
-docker images
-echo "========================================="
-
-echo "============= GO CACHE ============="
-find ~/.cache/go-build
-echo "========================================="
-
-echo "============= PACHYDERM ============="
-find ~/pachyderm
-echo "========================================="
-
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd "$DIR"/../..
@@ -25,8 +13,6 @@ GOPATH="${HOME}/go"
 export GOPATH
 PATH="${GOPATH}/bin:${PATH}"
 export PATH
-GODEBUG="gocachehash=1"
-export GODEBUG
 
 kubectl version
 
