@@ -6,7 +6,17 @@ base:
   # to refresh this list
   # (to get extra fancy, highlight the following lines in vim and type :! and then
   # the above command to replace it inline)
-  preload_docker_images: []
+  preload_docker_images:
+   - gcr.io/k8s-minikube/storage-provisioner:v1.8.1
+   - grafana/loki:2.0.0
+   - grafana/promtail:2.0.0
+   - k8s.gcr.io/coredns:1.6.7
+   - k8s.gcr.io/etcd:3.4.3-0
+   - k8s.gcr.io/kube-apiserver:v1.18.3
+   - k8s.gcr.io/kube-controller-manager:v1.18.3
+   - k8s.gcr.io/kube-proxy:v1.18.3
+   - k8s.gcr.io/kube-scheduler:v1.18.3
+   - k8s.gcr.io/pause:3.2
 
   # TODO: make this optional
   kernel_image: "quay.io/testfaster/ignite-kernel"
@@ -17,6 +27,7 @@ base:
     RUN echo "AcceptEnv ENT_ACT_CODE BUCKET PPS_BUCKETS AUTH_BUCKETS GOPROXY" >> /etc/ssh/sshd_config
     # TODO: switch this back to pachyderm/pachyderm once we land this
     # experiment
+    WORKDIR /root
     RUN git clone https://github.com/pachyderm/pachyderm-ci-experiment pachyderm
     # warm up go mod cache and go build cache
     RUN cd pachyderm && \
@@ -26,18 +37,19 @@ base:
   docker_bake_script: |-
     #!/bin/bash
     set -euo pipefail
-    cd ~/pachyderm
+    # bump 8
+    cd /root/pachyderm
     # warm up docker buildkit go mod cache and go build cache
     make docker-build
     # build docker images that are used in PPS tests
-    (cd etc/testing/images/ubuntu_with_s3_clients; make push-to-minikube)
+    (cd etc/testing/images/ubuntu_with_s3_clients; make image)
     make docker-build-kafka
 
   prewarm_script: |-
     #!/bin/bash
     set -euo pipefail
 
-    cd pachyderm
+    cd /root/pachyderm
 
     # start services used by tests
     make launch-loki
@@ -51,7 +63,7 @@ runtime:
   disk: 20GB
 
 prewarm_pool_size: 24
-max_pool_size: 24
+max_pool_size: 36
 # timeout vms after 1hr. hopefully tests will clean them up sooner, but if the
 # tests themselves timeout and cleanup doesn't get run...
 default_lease_timeout: 1h
