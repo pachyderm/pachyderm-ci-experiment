@@ -32,6 +32,11 @@ jobs:
 
       - run: etc/testing/github_tests.sh 2>&1 |ts
 
+      - run:
+          name: Release VM
+          command: testctl drop
+          when: always
+
       # retry on failure
       #- run:
       #    name: Test (retry 2)
