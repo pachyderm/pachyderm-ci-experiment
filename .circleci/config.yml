@@ -38,7 +38,7 @@ jobs:
           command: |
             export KUBECONFIG=$(pwd)/kubeconfig
             echo "============= IMAGES AFTER =============="
-            ./etc/testing/testctl-ssh.sh -- docker images
+            ./etc/testing/testctl-ssh.sh -- docker images --format "{{.Repository}}:{{.Tag}}" |sort |sed 's/^/   - /g'
             echo "========================================="
             testctl drop
           when: always
