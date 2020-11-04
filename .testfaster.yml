@@ -53,10 +53,8 @@ base:
     set -euo pipefail
 
     cd /root/pachyderm
-    ls -alh
-
     # start services used by tests
-    #make launch-loki
+    make launch-loki
     #make launch-dex # XXX doesn't seem to start, need to investigate
 
   kubernetes_version: 'v1.18.3'
