@@ -36,23 +36,27 @@ base:
 
   docker_bake_script: |-
     #!/bin/bash
-    set -euo pipefail
-    # bump 8
+    set -xeuo pipefail
     cd /root/pachyderm
     # warm up docker buildkit go mod cache and go build cache
     make docker-build
     # build docker images that are used in PPS tests
     (cd etc/testing/images/ubuntu_with_s3_clients; make image)
     make docker-build-kafka
+    echo "============= POST BAKE IMAGES =================="
+    docker images
+    ls -alh /var/lib/docker
+    echo "================================================="
 
   prewarm_script: |-
     #!/bin/bash
     set -euo pipefail
 
     cd /root/pachyderm
+    ls -alh
 
     # start services used by tests
-    make launch-loki
+    #make launch-loki
     #make launch-dex # XXX doesn't seem to start, need to investigate
 
   kubernetes_version: 'v1.18.3'
@@ -62,8 +66,8 @@ runtime:
   memory: 4GB
   disk: 20GB
 
-prewarm_pool_size: 24
-max_pool_size: 36
+prewarm_pool_size: 1
+max_pool_size: 2
 # timeout vms after 1hr. hopefully tests will clean them up sooner, but if the
 # tests themselves timeout and cleanup doesn't get run...
 default_lease_timeout: 1h
