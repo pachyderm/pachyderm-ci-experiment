@@ -36,6 +36,7 @@ jobs:
       - run:
           name: Release VM
           command: |
+            export KUBECONFIG=$(pwd)/kubeconfig
             echo "============= IMAGES AFTER =============="
             ./etc/testing/testctl-ssh.sh -- docker images
             echo "========================================="
