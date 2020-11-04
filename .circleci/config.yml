@@ -26,7 +26,8 @@ jobs:
 
       - run: |
           set -x
-          sudo curl -sSL -o /usr/local/bin/testctl https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
+          sudo curl -sSL -o /usr/local/bin/testctl \
+              https://storage.googleapis.com/get-faster-ci/Linux-x86_64/testctl
           sudo chmod +x /usr/local/bin/testctl
           testctl login --token "$TESTFASTER_TOKEN"
 
@@ -34,7 +35,11 @@ jobs:
 
       - run:
           name: Release VM
-          command: testctl drop
+          command: |
+            echo "============= IMAGES AFTER =============="
+            ./etc/testing/testctl-ssh.sh -- docker images
+            echo "========================================="
+            testctl drop
           when: always
 
       # retry on failure

@@ -1,6 +1,10 @@
 #!/bin/bash
 set -xeuo pipefail
 
+echo "============= IMAGES BEFORE ============="
+docker images
+echo "========================================="
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 cd "$DIR"/../..

@@ -8,6 +8,11 @@ fi
 
 command -v pv >/dev/null 2>&1 || { echo >&2 "Required command 'pv' not found. Run 'sudo apt-get install pv'."; exit 1; }
 
+if [ "$CIRCLE_BRANCH" != "" ]; then
+    echo "Detected running in CI, nothing to do."
+    exit 0
+fi
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 if command -v testctl 2>/dev/null; then
