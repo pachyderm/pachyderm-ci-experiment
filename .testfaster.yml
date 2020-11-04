@@ -17,6 +17,7 @@ base:
    - k8s.gcr.io/kube-proxy:v1.18.3
    - k8s.gcr.io/kube-scheduler:v1.18.3
    - k8s.gcr.io/pause:3.2
+   - postgres:13.0-alpine
 
   # TODO: make this optional
   kernel_image: "quay.io/testfaster/ignite-kernel"
@@ -33,7 +34,8 @@ base:
     # warm up go mod cache and go build cache
     RUN cd pachyderm && \
         git checkout afdde5ac0060bc0e9ecdffb74fd09fb53fa52a1e && \
-        make install
+        make install && \
+        go get -t ./...
 
   docker_bake_script: |-
     #!/bin/bash
@@ -65,8 +67,8 @@ runtime:
   memory: 4GB
   disk: 20GB
 
-prewarm_pool_size: 24
-max_pool_size: 24
+prewarm_pool_size: 1
+max_pool_size: 1
 # timeout vms after 1hr. hopefully tests will clean them up sooner, but if the
 # tests themselves timeout and cleanup doesn't get run...
 default_lease_timeout: 1h

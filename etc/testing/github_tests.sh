@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xeuo pipefail
+set -euo pipefail
 
 # In case we're retrying on a new cluster
 rm -f "${HOME}"/.pachyderm/config.json
