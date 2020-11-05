@@ -34,14 +34,13 @@ jobs:
       - run: etc/testing/circle_tests.sh 2>&1 |ts
 
       - run:
-          name: Release VM
+          name: Release VM after successful run
           command: |
             export KUBECONFIG=$(pwd)/kubeconfig
             echo "============= IMAGES AFTER =============="
             ./etc/testing/testctl-ssh.sh -- docker images --format "{{.Repository}}:{{.Tag}}" |sort |sed 's/^/   - /g'
             echo "========================================="
             testctl drop
-          when: always
 
       # retry on failure
       #- run:
