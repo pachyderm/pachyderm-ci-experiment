@@ -36,5 +36,5 @@ time ./etc/testing/testctl-ssh.sh \
     -o SendEnv=GOPROXY \
     -o SendEnv=ENT_ACT_CODE \
     -o SendEnv=BUCKET \
-    -- ./project/etc/testing/github_tests_inner.sh "$@"
+    -- ./project/etc/testing/circle_tests_inner.sh "$@"
 echo "Finished test $BUCKET."

@@ -31,7 +31,7 @@ jobs:
           sudo chmod +x /usr/local/bin/testctl
           testctl login --token "$TESTFASTER_TOKEN"
 
-      - run: etc/testing/github_tests.sh 2>&1 |ts
+      - run: etc/testing/circle_tests.sh 2>&1 |ts
 
       - run:
           name: Release VM
@@ -46,13 +46,13 @@ jobs:
       # retry on failure
       #- run:
       #    name: Test (retry 2)
-      #    command: etc/testing/github_tests.sh 2>&1 |ts
+      #    command: etc/testing/circle_tests.sh 2>&1 |ts
       #    when: on_fail
 
       # retry on failure again...
       #- run:
       #    name: Test (retry 3)
-      #    command: etc/testing/github_tests.sh 2>&1 |ts
+      #    command: etc/testing/circle_tests.sh 2>&1 |ts
       #    when: on_fail
 
 workflows:
