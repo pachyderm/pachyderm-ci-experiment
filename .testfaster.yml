@@ -55,10 +55,17 @@ base:
     set -euo pipefail
 
     cd /root/pachyderm
+
+    # re-warm OS file cache etc, e.g. load the file metadata into VM memory to
+    # make the actual build faster (it's already been cached on disk from the
+    # previous stages)
+    make install
+    make docker-build
+
     # start services used by tests
     make launch-loki
     #make launch-dex # XXX doesn't seem to start, need to investigate
-    # bump
+    # bump 2
 
   kubernetes_version: 'v1.18.3'
 
