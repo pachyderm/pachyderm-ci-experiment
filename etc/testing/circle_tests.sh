@@ -13,6 +13,10 @@ echo "Getting VM."
 time testctl get --config .testfaster.yml --slot "${BRANCH},${BUCKET}"
 echo "Finished getting VM."
 
+echo "==== KUBECONFIG ===="
+cat kubeconfig
+echo "===================="
+
 KUBECONFIG="$(pwd)/kubeconfig"
 export KUBECONFIG
 
