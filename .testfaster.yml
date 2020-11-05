@@ -34,7 +34,6 @@ base:
    - prom/prometheus:v1.7.0
    - python:latest
    - quay.io/prometheus/alertmanager:v0.7.1
-   - spout-test:latest
    - ubuntu:16.04
    - ubuntu:18.04
    - ubuntu:latest
@@ -99,7 +98,7 @@ base:
 runtime:
   cpus: 16
   memory: 4GB
-  disk: 20GB
+  disk: 50GB
 
 prewarm_pool_size: 32
 max_pool_size: 32
